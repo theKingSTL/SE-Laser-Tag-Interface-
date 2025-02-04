@@ -1,58 +1,53 @@
 import psycopg2
 from psycopg2 import sql
 
-# Define connection parameters
-connection_params = {
-    'dbname': 'photon',
-    'user': 'student',
-    #'password': 'student',
-    #'host': 'localhost',
-    #'port': '5432'
-}
+class PlayerDatabase:
 
-try:
-    # Connect to PostgreSQL
-    conn = psycopg2.connect(**connection_params)
-    cursor = conn.cursor()
+    def __init__(self):
+        self.connection_params = {
+            'dbname': 'photon',
+            'user': 'student',
+            'password': 'student',
+            'host': 'localhost',
+            'port': '5432'
+        }
 
-    # Execute a query
-    cursor.execute("SELECT version();")
+    def connect(self):
+        return psycopg2.connect(**self.connection_params)
 
-    # Fetch and display the result
-    version = cursor.fetchone()
-    print(f"Connected to - {version}")
+    def get_players(self):
+        try:
+            conn = self.connect()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM players;")
+            rows = cursor.fetchall()
+            return rows
+        except Exception as e:
+            print(f"Database error: {e}")
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
 
-    # Example: creating a table
-    #cursor.execute('''
-    #    CREATE TABLE IF NOT EXISTS employees (
-    #        id SERIAL PRIMARY KEY,
-    #        name VARCHAR(100),
-    #        department VARCHAR(50),
-    #        salary DECIMAL
-    #    );
-    #''')
-
-    # Insert sample data
-    cursor.execute('''
-        INSERT INTO players (id, codename)
-        VALUES (%s, %s);
-    ''', ('500', 'BhodiLi'))
-
-    # Commit the changes
-    conn.commit()
-
-    # Fetch and display data from the table
-    cursor.execute("SELECT * FROM players;")
-    rows = cursor.fetchall()
-    for row in rows:
-        print(row)
-
-except Exception as error:
-    print(f"Error connecting to PostgreSQL database: {error}")
-
-finally:
-    # Close the cursor and connection
-    if cursor:
-        cursor.close()
-    if conn:
-        conn.close()
+    def add_player(self, player_id, codename):
+        try:
+            conn = self.connect()
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO players (id, codename) VALUES (%s, %s);", (player_id, codename))
+            conn.commit()
+            print(f"Added player {codename} with ID {player_id}")
+        except Exception as e:
+            print(f"Error inserting player: {e}")
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+# example of main for when ran on main 
+# if __name__ == "__main__":
+#     db = PlayerDatabase()  # Create a database instance
+#     db.add_player(503, "NightHawk")  # Add a player
+#     players = db.get_players()  # Fetch players
+#     for player in players:
+#         print(player)
