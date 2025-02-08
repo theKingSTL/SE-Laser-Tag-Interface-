@@ -1,0 +1,29 @@
+log into virtual box - command prompt 
+
+(to connect)
+$psql photon
+
+(list all databases)
+$\l
+
+(connect to photon)
+$\c photon 
+
+(list all tables)
+$\dt
+
+(describe a table)
+$\d table_name 
+
+(ADD ID)
+$INSERT INTO table_name (column 1, column2) VALUES ("value 1" , "value 2")
+			 id        name 
+
+(Update ID)
+$UPDATE table_name SET name = "VALUES" WHERE id = value       
+
+(Delete ID)
+$DELETE FROM table_name WHERE id = value;
+
+
+			

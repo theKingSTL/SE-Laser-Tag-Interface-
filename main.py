@@ -13,12 +13,12 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Photon-System")
 
 # Connect to the database
-# db = PlayerDatabase()
-# db.connect()
+db = PlayerDatabase()
+db.connect()
 
 # Test DB connection
-#players = db.get_players()
-#print(players)
+players = db.get_players()
+print(players)
 
 #refit image 
 def getAspect(image, screen):
@@ -57,7 +57,7 @@ def playerGUIrun(screen):
     running = True
     while running:
         for event in pygame.event.get():
-            action = ui.handle_event(event)
+            action = ui.handleEvent(event)
             if action == "quit":
                 running = False
 
