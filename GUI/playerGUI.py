@@ -75,7 +75,7 @@ class TeamBoxUI:
         try:
             conn = self.database.connect()  
             cursor = conn.cursor()
-            cursor.execute("SELECT name FROM players WHERE id = %s", (player_id,))
+            cursor.execute("SELECT codename FROM players WHERE id = %s", (player_id,))
             result = cursor.fetchone()
             conn.close()
             return result[0] if result else "Unknown Player"

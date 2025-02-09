@@ -17,8 +17,8 @@ db = PlayerDatabase()
 db.connect()
 
 # # Test DB connection
-# players = db.get_players()
-# print(players)
+players = db.get_players()
+print(players)
 
 #refit image 
 def getAspect(image, screen):
@@ -50,9 +50,9 @@ def getAspect(image, screen):
     return xPos, yPos, scaledImage
 
 #will run the Player GUI 
-def playerGUIrun(screen):
+def playerGUIrun(screen, db):
     clock = pygame.time.Clock()
-    ui = TeamBoxUI(screen)
+    ui = TeamBoxUI(screen, db)
 
     running = True
     while running:
@@ -84,7 +84,7 @@ def main():
     time.sleep(3)  # Show image for 3 seconds
     
     # Run the player entry screen
-    playerGUIrun(screen)
+    playerGUIrun(screen, db)
 
 if __name__ == "__main__":
     main()  # Start the program
