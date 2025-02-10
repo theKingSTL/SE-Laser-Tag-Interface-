@@ -1,146 +1,161 @@
 import pygame
 import sys
+import os
+import psycopg2
 
-pygame.init()
+# Add parent directory to system path for main.py import
+sys.path.append(os.path.abspath('../'))
+from main import getAspect
 
-# Screen setup
-res = (800, 600)
-screen = pygame.display.set_mode(res)
-pygame.display.set_caption("2 Teams with Different Passive Colors")
+class TeamBoxUI:
+    def __init__(self, screen, database):
+        # Initialize screen and dimensions
+        self.screen = screen
+        self.width, self.height = screen.get_size()
+        self.database = database  # Store database connection
+        
+        # Load background image and adjust its aspect ratio
+        self.bgImage = pygame.image.load('Photos/logo.jpg')
+        self.bgX, self.bgY, self.scaledBgImage = getAspect(self.bgImage, self.screen)
+        
+        # Draw grayscale background once
+        grayscaleBg = self.convertToGrayscale(self.scaledBgImage)
+        self.screen.blit(grayscaleBg, (self.bgX, self.bgY))
 
-# Basic colors
-COLOR_WHITE   = (255, 255, 255)
-COLOR_LIGHT   = (170, 170, 170)
-COLOR_DARK    = (100, 100, 100)
-COLOR_ACTIVE  = pygame.Color("cornsilk1")
-COLOR_BLACK   = (0, 0, 0)
-BG_COLOR      = (25, 25, 25)
+        # Define colors
+        self.colorWhite = (255, 255, 255)
+        self.colorBlack = (0, 0, 0)
+        self.colorActive = pygame.Color("cornsilk1")
+        self.teamColors = [pygame.Color("red"), pygame.Color("green3")]
 
-# Passive colors per team (Team 1 = 'crimson', Team 2 = 'green3')
-TEAM_PASSIVE_COLORS = [
-    pygame.Color("crimson"),  # Team 0
-    pygame.Color("green3")    # Team 1
-]
+        # Define fonts
+        self.fontTitle = pygame.font.SysFont("Corbel", 45, bold=True)
+        self.fontButton = pygame.font.SysFont("Corbel", 35)
+        self.fontText = pygame.font.SysFont("Corbel", 30)
 
-# Fonts
-font_button = pygame.font.SysFont("Corbel", 35)
-font_text   = pygame.font.SysFont("Corbel", 35)
+        # Render labels
+        self.labels = [
+            self.fontTitle.render("Red Team", True, self.colorWhite),
+            self.fontTitle.render("Green Team", True, self.colorWhite)
+        ]
+        self.instructions = self.fontText.render("Insert ID in the team box below", True, self.colorWhite)
 
-# "Quit" button text
-text_quit = font_button.render("Quit", True, COLOR_WHITE)
+        # Quit button
+        self.textQuit = self.fontButton.render("Quit", True, self.colorWhite)
 
-# Screen dimensions
-width, height = screen.get_size()
+        # Define team box structure
+        self.numTeams = 2
+        self.numBoxesPerTeam = 15
+        self.activeBoxes = [0, 0]  # Tracks number of active boxes per team
+        self.playerBoxes = self.createBoxes()
 
-# Number of teams and number of boxes per team
-NUM_TEAMS = 2
-NUM_BOXES_PER_TEAM = 10
+        # Track active input boxes
+        self.active = [[False] * self.numBoxesPerTeam for _ in range(self.numTeams)]
+        
+        # Store entered IDs & corresponding player names
+        self.ids = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
+        self.names = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
 
-# Create a 2D list of boxes
-player_boxes = []
-for team_index in range(NUM_TEAMS):
-    boxes_for_this_team = []
-    for i in range(NUM_BOXES_PER_TEAM):
-        # Position each team's column differently
-        # e.g., Team 0 is near x=20, Team 1 is near x=420
-        x_pos = 20 + team_index * 400
-        y_pos = 20 + 40 * i
-        rect = pygame.Rect(x_pos, y_pos, 140, 35)
-        boxes_for_this_team.append(rect)
-    player_boxes.append(boxes_for_this_team)
+    def createBoxes(self):
+        """Create input boxes, but only show one per team initially."""
+        boxes = []
+        spacing_x = self.width // 3  # Divide screen into three sections
+        for teamIndex in range(self.numTeams):
+            teamBoxes = []
+            for i in range(self.numBoxesPerTeam):
+                xPos = spacing_x * (teamIndex + 1) - 70  # Center boxes in each column
+                yPos = 200 + 50 * i  # Stack boxes vertically
+                rect = pygame.Rect(xPos, yPos, 140, 40)
+                teamBoxes.append(rect)
+            boxes.append(teamBoxes)
+        return boxes
 
-# 2D lists for active flags and texts
-active = [[False]*NUM_BOXES_PER_TEAM for _ in range(NUM_TEAMS)]
-texts = [["" for _ in range(NUM_BOXES_PER_TEAM)] for _ in range(NUM_TEAMS)]
+    def fetchPlayerName(self, player_id):
+        """Retrieve player name from database using player ID."""
+        try:
+            conn = self.database.connect()  
+            cursor = conn.cursor()
+            cursor.execute("SELECT codename FROM players WHERE id = %s", (player_id,))
+            result = cursor.fetchone()
+            conn.close()
+            return result[0] if result else "Unknown Player"
+        except psycopg2.Error as e:
+            print(f"Database error: {e}")
+            return "Error"
 
-def get_max_text_width():
-    """Returns the widest rendered text among all teams/boxes."""
-    max_width = 0
-    for team_index in range(NUM_TEAMS):
-        for box_index in range(NUM_BOXES_PER_TEAM):
-            text_width, _ = font_text.size(texts[team_index][box_index])
-            if text_width > max_width:
-                max_width = text_width
-    return max_width
-
-while True:
-    for event in pygame.event.get():
+    def handleEvent(self, event):
+        """Handle user input (mouse clicks and keyboard input)."""
         if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-        
+            return "quit"
+
         if event.type == pygame.MOUSEBUTTONDOWN:
-            mouse_pos = pygame.mouse.get_pos()
+            mousePos = pygame.mouse.get_pos()
             
-            # Check if a box was clicked
-            for team_index in range(NUM_TEAMS):
-                for box_index, box in enumerate(player_boxes[team_index]):
-                    if box.collidepoint(mouse_pos):
-                        # If you only want ONE box active in the entire UI:
-                        active = [[False]*NUM_BOXES_PER_TEAM for _ in range(NUM_TEAMS)]
-                        active[team_index][box_index] = True
-                    # If you want each team to have its own active box 
-                    # (independent of the others), replace the above lines with:
-                    # active[team_index] = [False]*NUM_BOXES_PER_TEAM
-                    # active[team_index][box_index] = True
-            
-            # Check if the 'quit' button was clicked
-            if (width - 150 <= mouse_pos[0] <= width - 10) and (height - 50 <= mouse_pos[1] <= height - 10):
-                pygame.quit()
-                sys.exit()
-        
+            # Check if quit button was clicked
+            if (self.width - 150 <= mousePos[0] <= self.width - 10) and (self.height - 50 <= mousePos[1] <= self.height - 10):
+                return "quit"
+
+            # Check if text box was clicked
+            for teamIndex in range(self.numTeams):
+                for boxIndex in range(self.activeBoxes[teamIndex] + 1):
+                    if self.playerBoxes[teamIndex][boxIndex].collidepoint(mousePos):
+                        self.active = [[False] * self.numBoxesPerTeam for _ in range(self.numTeams)]
+                        self.active[teamIndex][boxIndex] = True
+
         if event.type == pygame.KEYDOWN:
-            # Update text for whichever box is active
-            for team_index in range(NUM_TEAMS):
-                for box_index in range(NUM_BOXES_PER_TEAM):
-                    if active[team_index][box_index]:
+            for teamIndex in range(self.numTeams):
+                for boxIndex in range(self.activeBoxes[teamIndex] + 1):
+                    if self.active[teamIndex][boxIndex]:
                         if event.key == pygame.K_BACKSPACE:
-                            texts[team_index][box_index] = texts[team_index][box_index][:-1]
+                            self.ids[teamIndex][boxIndex] = self.ids[teamIndex][boxIndex][:-1]
+                        elif event.key == pygame.K_RETURN:
+                            # Fetch name from database and open a new box if limit isn't reached
+                            player_id = self.ids[teamIndex][boxIndex]
+                            self.names[teamIndex][boxIndex] = self.fetchPlayerName(player_id)
+                            if self.activeBoxes[teamIndex] < self.numBoxesPerTeam - 1:
+                                self.activeBoxes[teamIndex] += 1
                         else:
-                            texts[team_index][box_index] += event.unicode
-            
-            # Press F4 to close (optional)
-            if event.key == pygame.K_F4:
-                pygame.quit()
-                sys.exit()
-    
-    # Clear the screen
-    screen.fill(BG_COLOR)
+                            self.ids[teamIndex][boxIndex] += event.unicode
 
-    # Draw the 'quit' button with hover effect
-    mouse = pygame.mouse.get_pos()
-    if (width - 150 <= mouse[0] <= width - 10) and (height - 50 <= mouse[1] <= height - 10):
-        pygame.draw.rect(screen, COLOR_LIGHT, [width - 150, height - 50, 140, 40])
-    else:
-        pygame.draw.rect(screen, COLOR_DARK, [width - 150, height - 50, 140, 40])
-    screen.blit(text_quit, (width - 110, height - 50))
+    def convertToGrayscale(self, image):
+        """Convert image to grayscale."""
+        grayscaleImage = image.copy()
+        for x in range(grayscaleImage.get_width()):
+            for y in range(grayscaleImage.get_height()):
+                r, g, b, a = grayscaleImage.get_at((x, y))
+                gray = int(0.299 * r + 0.587 * g + 0.114 * b)
+                grayscaleImage.set_at((x, y), (gray, gray, gray, a))
+        return grayscaleImage
 
-    # Determine a common width for all boxes
-    max_text_width = get_max_text_width()
-    common_width   = max(100, max_text_width + 20)  # add some padding
+    def draw(self):
+        """Draw all UI elements."""
+        mouse = pygame.mouse.get_pos()
 
-    # Update and draw each team's boxes
-    for team_index in range(NUM_TEAMS):
-        for box_index, box in enumerate(player_boxes[team_index]):
-            # Update the box's width to match the widest text
-            box.w = common_width
-            
-            # Choose the color based on active state and team
-            if active[team_index][box_index]:
-                color = COLOR_ACTIVE
-            else:
-                # Use the passive color for this specific team
-                color = TEAM_PASSIVE_COLORS[team_index]
+        # Draw quit button
+        quitRect = pygame.Rect(self.width - 150, self.height - 50, 140, 40)
+        pygame.draw.rect(self.screen, (170, 170, 170) if quitRect.collidepoint(mouse) else (100, 100, 100), quitRect)
+        self.screen.blit(self.textQuit, (self.width - 110, self.height - 50))
 
-            pygame.draw.rect(screen, color, box)
+        # Draw team labels
+        spacing_x = self.width // 3
+        for i, label in enumerate(self.labels):
+            self.screen.blit(label, (spacing_x * (i + 1) - label.get_width() // 2, 50))
+            self.screen.blit(self.instructions, (spacing_x * (i + 1) - self.instructions.get_width() // 2, 120))
 
-            # Render the text for this box
-            text_surf = font_text.render(texts[team_index][box_index], True, COLOR_BLACK)
-            text_w, text_h = text_surf.get_size()
+        # Draw input boxes
+        for teamIndex in range(self.numTeams):
+            for boxIndex in range(self.activeBoxes[teamIndex] + 1):
+                box = self.playerBoxes[teamIndex][boxIndex]
+                pygame.draw.rect(self.screen, self.colorActive if self.active[teamIndex][boxIndex] else self.teamColors[teamIndex], box)
 
-            # Center the text in the box
-            text_x = box.x + (box.w - text_w) // 2
-            text_y = box.y + (box.h - text_h) // 2
-            screen.blit(text_surf, (text_x, text_y))
+                # Render input text
+                text = self.ids[teamIndex][boxIndex]
+                textSurf = self.fontText.render(text, True, self.colorBlack)
+                self.screen.blit(textSurf, (box.x + 10, box.y + 5))
 
-    pygame.display.update()
+                # Render player name
+                name = self.names[teamIndex][boxIndex]
+                nameSurf = self.fontText.render(name, True, self.colorWhite)
+                self.screen.blit(nameSurf, (box.x + 160, box.y + 5))
+
+        pygame.display.update()
