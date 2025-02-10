@@ -8,7 +8,7 @@ import socket
 
 localIP     = "127.0.0.1"
 #he also wants an option to "change the network" which i'm guessing means either changing IP or port or both
-localPort   = 20001
+localPort   = 7501
 bufferSize  = 1024
 #so this looks like what we are sending the client (and i guess we have to encode?)
 msgFromServer       = "Hello UDP Client"
@@ -21,6 +21,7 @@ UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 UDPServerSocket.bind((localIP, localPort))
 
 print("UDP server up and listening")
+repeat = 0
 
 # Listen for incoming datagrams
 
@@ -37,3 +38,11 @@ while(True):
 
     # Sending a reply to client
     UDPServerSocket.sendto(bytesToSend, address)
+
+    repeat += 1
+    if (repeat == 100):
+        #me trying to stop the server (and it just not working <3)
+        answer = input("should i stop")
+        if (answer == "y"):
+            break
+
