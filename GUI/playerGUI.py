@@ -135,9 +135,19 @@ class TeamBoxUI:
         mouse = pygame.mouse.get_pos()
 
         # Draw quit button
-        quitRect = pygame.Rect(self.width - 150, self.height - 50, 140, 40)
-        pygame.draw.rect(self.screen, (170, 170, 170) if quitRect.collidepoint(mouse) else (100, 100, 100), quitRect)
-        self.screen.blit(self.textQuit, (self.width - 110, self.height - 50))
+        quitRect = pygame.Rect(940, self.height - 100, 100, 50)
+        pygame.draw.rect(self.screen, (0,0,0), quitRect)
+        self.screen.blit(self.quit, (quitRect.x + 15, quitRect.y))
+
+        # Draw resest button
+        resetRect = pygame.Rect(270, self.height - 100, 100, 50)
+        pygame.draw.rect(self.screen, (0,0,0), resetRect)
+        self.screen.blit(self.clear, (resetRect.x + 15, resetRect.y))
+
+        # Draw change network button
+        changeRect = pygame.Rect(self.width/2 - 50, self.height - 100, 100, 50)
+        pygame.draw.rect(self.screen, (0,0,0), changeRect)
+        self.screen.blit(self.textQuit, (changeRect.x -60, changeRect.y))
 
         # Draw team labels
         spacing_x = self.width // 3

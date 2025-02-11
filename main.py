@@ -14,11 +14,12 @@ pygame.display.set_caption("Photon-System")
 
 # Connect to the database
 db = PlayerDatabase()
-db.connect()
+#db.connect()
 
 # # Test DB connection
-players = db.get_players()
-print(players)
+#players = db.g
+# et_players()
+#print(players)
 
 #refit image 
 def getAspect(image, screen):
