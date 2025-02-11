@@ -104,29 +104,26 @@ class TeamBoxUI:
             # Check if quit button was clicked
             if (self.width - 150 <= mousePos[0] <= self.width - 10) and (self.height - 50 <= mousePos[1] <= self.height - 10):
                 return "quit"
-
+            
             # Check if text box was clicked
             for teamIndex in range(self.numTeams):
-                for boxIndex in range(self.activeBoxes[teamIndex] + 1):
-                    if self.playerBoxes[teamIndex][boxIndex].collidepoint(mousePos):
-                        self.active = [[False] * self.numBoxesPerTeam for _ in range(self.numTeams)]
-                        self.active[teamIndex][boxIndex] = True
+                for boxIndex, box in enumerate(self.playerBoxes[teamIndex]):
+                    if box.collidepoint(mousePos):
+                        self.focusedBox = (teamIndex, boxIndex)
+                        return
 
-        if event.type == pygame.KEYDOWN:
-            for teamIndex in range(self.numTeams):
-                for boxIndex in range(self.activeBoxes[teamIndex] + 1):
-                    if self.active[teamIndex][boxIndex]:
-                        if event.key == pygame.K_BACKSPACE:
-                            self.ids[teamIndex][boxIndex] = self.ids[teamIndex][boxIndex][:-1]
-                        elif event.key == pygame.K_RETURN:
-                            # Fetch name from database and open a new box if limit isn't reached
-                            player_id = self.ids[teamIndex][boxIndex]
-                            self.names[teamIndex][boxIndex] = self.fetchPlayerName(player_id)
-                            if self.activeBoxes[teamIndex] < self.numBoxesPerTeam - 1:
-                                self.activeBoxes[teamIndex] += 1
-                        else:
-                            self.ids[teamIndex][boxIndex] += event.unicode
-    
+        if event.type == pygame.KEYDOWN and hasattr(self, 'focusedBox'):
+            teamIndex, boxIndex = self.focusedBox
+            
+            if event.key == pygame.K_BACKSPACE:
+                self.ids[teamIndex][boxIndex] = self.ids[teamIndex][boxIndex][:-1]
+            elif event.key == pygame.K_RETURN:
+                player_id = self.ids[teamIndex][boxIndex]
+                self.names[teamIndex][boxIndex] = self.fetchPlayerName(player_id)
+                self.focusedBox = None  # Remove focus after pressing enter
+            else:
+                self.ids[teamIndex][boxIndex] += event.unicode
+
     #converts the image to grey scale 
     def convertToGrayscale(self, image):
         grayscaleImage = image.copy()
@@ -158,13 +155,13 @@ class TeamBoxUI:
                 pygame.draw.rect(self.screen, self.teamColors[teamIndex], box)
 
                 # Render input text
-                # text = self.ids[teamIndex][boxIndex]
-                # textSurf = self.fontText.render(text, True, self.colorBlack)
-                # self.screen.blit(textSurf, (box.x + 10, box.y + 5))
+                text = self.ids[teamIndex][boxIndex]
+                textSurf = self.fontText.render(text, True, self.colorBlack)
+                self.screen.blit(textSurf, (box.x + 10, box.y + 5))
 
                 # Render player name
-                # name = self.names[teamIndex][boxIndex]
-                # nameSurf = self.fontText.render(name, True, self.colorWhite)
-                # self.screen.blit(nameSurf, (box.x + 160, box.y + 5))
+                name = self.names[teamIndex][boxIndex]
+                nameSurf = self.fontText.render(name, True, self.colorWhite)
+                self.screen.blit(nameSurf, (box.x + 160, box.y + 5))
 
         pygame.display.update()
