@@ -33,8 +33,8 @@ class TeamBoxUI:
         #create the top labels - green and red team 
         self.labels = [
             #render (name, anti-aliasing, color)
-            self.fontTitle.render("Red Team", True, self.colorWhite),
-            self.fontTitle.render("Green Team", True, self.colorWhite)
+            self.fontTitle.render("Red Team", True, self.teamColors[0]),
+            self.fontTitle.render("Green Team", True, self.teamColors[1])
         ]
         
         #the instruction to be set below labels 
@@ -44,19 +44,19 @@ class TeamBoxUI:
         self.quit = self.fontButton.render("Quit", True, self.colorWhite)
         #button for clearn and change address 
         self.clear = self.fontButton.render("Clear Game", True, self.colorWhite)
-        self.textQuit = self.fontButton.render("Change Adress", True, self.colorWhite)
+        self.textQuit = self.fontButton.render("Change Address", True, self.colorWhite)
 
         #creates params for the boxs for teams 
         self.numTeams = 2
         self.numBoxesPerTeam = 15
         #used to track how many active boxes for display
         #this starts if with one in use for some reason 
-        self.activeBoxes = [0, 0]
+        #self.activeBoxes = [0, 0]
         self.playerBoxes = self.createBoxes() #will return the player boxes - two lists of 15 boxs 
 
         #a list of a list of bools - init to all False no active boxes 
         # in our case its two lists full of 15 bools for which boxes are active for display reasons 
-        self.active = [[False] * self.numBoxesPerTeam for _ in range(self.numTeams)]
+        #self.active = [[False] * self.numBoxesPerTeam for _ in range(self.numTeams)]
         
         #same idea as above for the ids and names enter empty strings 
         self.ids = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
@@ -64,14 +64,20 @@ class TeamBoxUI:
 
     #will return a list of pygame rects 
     def createBoxes(self):
-        boxes = []
-        spacing_x = self.width // 3  
+        boxes = []  
         for teamIndex in range(self.numTeams):
             teamBoxes = []
+            yInc = 0
             for i in range(self.numBoxesPerTeam):
-                xPos = spacing_x * (teamIndex + 1) - 70  # Center boxes in each column
-                yPos = 200 + 50 * i  # Stack boxes vertically
-                rect = pygame.Rect(xPos, yPos, 140, 40)
+                if i%2 == 0:
+                    xInc= 100
+                    yInc = yInc + 56.65
+                else:
+                    xInc = 315
+                
+                xPos =  (teamIndex*640) + xInc
+                yPos = 160 + yInc
+                rect = pygame.Rect(xPos, yPos, 185, 40)
                 teamBoxes.append(rect)
             boxes.append(teamBoxes)
         return boxes
@@ -99,29 +105,26 @@ class TeamBoxUI:
             # Check if quit button was clicked
             if (self.width - 150 <= mousePos[0] <= self.width - 10) and (self.height - 50 <= mousePos[1] <= self.height - 10):
                 return "quit"
-
+            
             # Check if text box was clicked
             for teamIndex in range(self.numTeams):
-                for boxIndex in range(self.activeBoxes[teamIndex] + 1):
-                    if self.playerBoxes[teamIndex][boxIndex].collidepoint(mousePos):
-                        self.active = [[False] * self.numBoxesPerTeam for _ in range(self.numTeams)]
-                        self.active[teamIndex][boxIndex] = True
+                for boxIndex, box in enumerate(self.playerBoxes[teamIndex]):
+                    if box.collidepoint(mousePos):
+                        self.focusedBox = (teamIndex, boxIndex)
+                        return
 
-        if event.type == pygame.KEYDOWN:
-            for teamIndex in range(self.numTeams):
-                for boxIndex in range(self.activeBoxes[teamIndex] + 1):
-                    if self.active[teamIndex][boxIndex]:
-                        if event.key == pygame.K_BACKSPACE:
-                            self.ids[teamIndex][boxIndex] = self.ids[teamIndex][boxIndex][:-1]
-                        elif event.key == pygame.K_RETURN:
-                            # Fetch name from database and open a new box if limit isn't reached
-                            player_id = self.ids[teamIndex][boxIndex]
-                            self.names[teamIndex][boxIndex] = self.fetchPlayerName(player_id)
-                            if self.activeBoxes[teamIndex] < self.numBoxesPerTeam - 1:
-                                self.activeBoxes[teamIndex] += 1
-                        else:
-                            self.ids[teamIndex][boxIndex] += event.unicode
-    
+        if event.type == pygame.KEYDOWN and hasattr(self, 'focusedBox'):
+            teamIndex, boxIndex = self.focusedBox
+            
+            if event.key == pygame.K_BACKSPACE:
+                self.ids[teamIndex][boxIndex] = self.ids[teamIndex][boxIndex][:-1]
+            elif event.key == pygame.K_RETURN:
+                player_id = self.ids[teamIndex][boxIndex]
+                self.names[teamIndex][boxIndex] = self.fetchPlayerName(player_id)
+                self.focusedBox = None  # Remove focus after pressing enter
+            else:
+                self.ids[teamIndex][boxIndex] += event.unicode
+
     #converts the image to grey scale 
     def convertToGrayscale(self, image):
         grayscaleImage = image.copy()
@@ -152,9 +155,9 @@ class TeamBoxUI:
 
         # Draw input boxes
         for teamIndex in range(self.numTeams):
-            for boxIndex in range(self.activeBoxes[teamIndex] + 1):
+            for boxIndex in range(self.numBoxesPerTeam):
                 box = self.playerBoxes[teamIndex][boxIndex]
-                pygame.draw.rect(self.screen, self.colorActive if self.active[teamIndex][boxIndex] else self.teamColors[teamIndex], box)
+                pygame.draw.rect(self.screen, self.teamColors[teamIndex], box)
 
                 # Render input text
                 text = self.ids[teamIndex][boxIndex]
