@@ -8,7 +8,7 @@ from Server.database import *  # If needed for player data
 pygame.init()
 
 # Create the game screen (800x600)
-SCREEN_WIDTH, SCREEN_HEIGHT = 800, 600
+SCREEN_WIDTH, SCREEN_HEIGHT = 1280, 800
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Photon-System")
 
