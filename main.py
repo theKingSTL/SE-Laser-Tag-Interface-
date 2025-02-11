@@ -14,11 +14,11 @@ pygame.display.set_caption("Photon-System")
 
 # Connect to the database
 db = PlayerDatabase()
-# db.connect()
+db.connect()
 
 # # Test DB connection
-# players = db.get_players()
-# print(players)
+players = db.get_players()
+print(players)
 
 #refit image 
 def getAspect(image, screen):
@@ -53,7 +53,7 @@ def getAspect(image, screen):
 def playerGUIrun(screen, db):
     clock = pygame.time.Clock()
     ui = TeamBoxUI(screen, db)
-
+    
     running = True
     while running:
         for event in pygame.event.get():
@@ -71,8 +71,9 @@ def main():
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))  # Set window size
     pygame.display.set_caption("Game Start")
     
-    image = pygame.image.load("Photos/logo.jpg")  # Change to your image path
-    x, y, scaledImage = getAspect(image, screen)
+    # Load starting image
+    startImage = pygame.image.load("Photos/logo.jpg")  
+    x, y, scaledImage = getAspect(startImage, screen)
 
     # Fill screen with black
     screen.fill((0, 0, 0))
@@ -81,7 +82,7 @@ def main():
     screen.blit(scaledImage, (x, y))
     pygame.display.flip()
     
-    time.sleep(3)  # Show image for 3 seconds
+    #time.sleep(3)  # Show image for 3 seconds
     
     # Run the player entry screen
     playerGUIrun(screen, db)

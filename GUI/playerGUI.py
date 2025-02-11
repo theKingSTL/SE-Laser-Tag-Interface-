@@ -15,7 +15,7 @@ class TeamBoxUI:
         self.width, self.height = screen.get_size()
         self.database = database  
         #background image being set to same as splash screen with getAspect
-        self.bgImage = pygame.image.load('Photos/logo.jpg')
+        self.bgImage = pygame.image.load('Photos/logo2.jpg')
         self.bgX, self.bgY, self.scaledBgImage = getAspect(self.bgImage, self.screen)
         #now set background to black and white and draw
         grayscaleBg = self.convertToGrayscale(self.scaledBgImage)
@@ -26,7 +26,7 @@ class TeamBoxUI:
         self.colorActive = pygame.Color("cornsilk1")
         self.teamColors = [pygame.Color("red"), pygame.Color("green3")]
         #fonts to use 
-        self.fontTitle = pygame.font.SysFont("Corbel", 45, bold=True)
+        self.fontTitle = pygame.font.SysFont("Corbel", 70, bold=True)
         self.fontButton = pygame.font.SysFont("Corbel", 35)
         self.fontText = pygame.font.SysFont("Corbel", 30)
 
@@ -36,8 +36,9 @@ class TeamBoxUI:
             self.fontTitle.render("Red Team", True, self.teamColors[0]),
             self.fontTitle.render("Green Team", True, self.teamColors[1])
         ]
+        
         #the instruction to be set below labels 
-        self.instructions = self.fontText.render("Insert ID in the team box below", True, self.colorWhite)
+        self.instructions = self.fontText.render("Type ID in box", True, self.colorWhite)
 
         #quit button (name, anti-aliasing, color)
         self.quit = self.fontButton.render("Quit", True, self.colorWhite)
@@ -153,10 +154,14 @@ class TeamBoxUI:
         self.screen.blit(self.textQuit, (changeRect.x+10, changeRect.y+7.5))
 
         # Draw team labels
-        spacing_x = self.width // 3
+        spacing_x = 640
         for i, label in enumerate(self.labels):
-            self.screen.blit(label, (spacing_x * (i + 1) - label.get_width() // 2, 50))
-            self.screen.blit(self.instructions, (spacing_x * (i + 1) - self.instructions.get_width() // 2, 120))
+            label = pygame.transform.scale(label, (200, label.get_height()))
+            self.screen.blit(label, (spacing_x * i + 255, 30))
+        
+        # Draw instructions
+        self.instructions = pygame.transform.scale(self.instructions, (self.instructions.get_width(), 70))  
+        self.screen.blit(self.instructions, (self.width // 2 - self.instructions.get_width() // 2, 110))
 
         # Draw input boxes
         for teamIndex in range(self.numTeams):
