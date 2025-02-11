@@ -3,63 +3,68 @@ import sys
 import os
 import psycopg2
 
-# Add parent directory to system path for main.py import
+#adding parent directory to path so the getAspect method can be used from main 
 sys.path.append(os.path.abspath('../'))
 from main import getAspect
 
+#class for player selection UI 
 class TeamBoxUI:
     def __init__(self, screen, database):
-        # Initialize screen and dimensions
+        #take parameters and make screen and database 
         self.screen = screen
         self.width, self.height = screen.get_size()
-        self.database = database  # Store database connection
-        
-        # Load background image and adjust its aspect ratio
+        self.database = database  
+        #background image being set to same as splash screen with getAspect
         self.bgImage = pygame.image.load('Photos/logo.jpg')
         self.bgX, self.bgY, self.scaledBgImage = getAspect(self.bgImage, self.screen)
-        
-        # Draw grayscale background once
+        #now set background to black and white and draw
         grayscaleBg = self.convertToGrayscale(self.scaledBgImage)
         self.screen.blit(grayscaleBg, (self.bgX, self.bgY))
-
-        # Define colors
+        #make a couple colors do we need them as members of class?
         self.colorWhite = (255, 255, 255)
         self.colorBlack = (0, 0, 0)
         self.colorActive = pygame.Color("cornsilk1")
         self.teamColors = [pygame.Color("red"), pygame.Color("green3")]
-
-        # Define fonts
+        #fonts to use 
         self.fontTitle = pygame.font.SysFont("Corbel", 45, bold=True)
         self.fontButton = pygame.font.SysFont("Corbel", 35)
         self.fontText = pygame.font.SysFont("Corbel", 30)
 
-        # Render labels
+        #create the top labels - green and red team 
         self.labels = [
+            #render (name, anti-aliasing, color)
             self.fontTitle.render("Red Team", True, self.colorWhite),
             self.fontTitle.render("Green Team", True, self.colorWhite)
         ]
+        #the instruction to be set below labels 
         self.instructions = self.fontText.render("Insert ID in the team box below", True, self.colorWhite)
 
-        # Quit button
-        self.textQuit = self.fontButton.render("Quit", True, self.colorWhite)
+        #quit button (name, anti-aliasing, color)
+        self.quit = self.fontButton.render("Quit", True, self.colorWhite)
+        #button for clearn and change address 
+        self.clear = self.fontButton.render("Clear Game", True, self.colorWhite)
+        self.textQuit = self.fontButton.render("Change Adress", True, self.colorWhite)
 
-        # Define team box structure
+        #creates params for the boxs for teams 
         self.numTeams = 2
         self.numBoxesPerTeam = 15
-        self.activeBoxes = [0, 0]  # Tracks number of active boxes per team
-        self.playerBoxes = self.createBoxes()
+        #used to track how many active boxes for display
+        #this starts if with one in use for some reason 
+        self.activeBoxes = [0, 0]
+        self.playerBoxes = self.createBoxes() #will return the player boxes - two lists of 15 boxs 
 
-        # Track active input boxes
+        #a list of a list of bools - init to all False no active boxes 
+        # in our case its two lists full of 15 bools for which boxes are active for display reasons 
         self.active = [[False] * self.numBoxesPerTeam for _ in range(self.numTeams)]
         
-        # Store entered IDs & corresponding player names
+        #same idea as above for the ids and names enter empty strings 
         self.ids = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
         self.names = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
 
+    #will return a list of pygame rects 
     def createBoxes(self):
-        """Create input boxes, but only show one per team initially."""
         boxes = []
-        spacing_x = self.width // 3  # Divide screen into three sections
+        spacing_x = self.width // 3  
         for teamIndex in range(self.numTeams):
             teamBoxes = []
             for i in range(self.numBoxesPerTeam):
@@ -70,21 +75,20 @@ class TeamBoxUI:
             boxes.append(teamBoxes)
         return boxes
 
+    #will look for player id in database then return either none flag or codename 
     def fetchPlayerName(self, player_id):
-        """Retrieve player name from database using player ID."""
         try:
             conn = self.database.connect()  
             cursor = conn.cursor()
             cursor.execute("SELECT codename FROM players WHERE id = %s", (player_id,))
             result = cursor.fetchone()
             conn.close()
-            return result[0] if result else "Unknown Player"
+            return result[0] if result else None
         except psycopg2.Error as e:
             print(f"Database error: {e}")
             return "Error"
 
     def handleEvent(self, event):
-        """Handle user input (mouse clicks and keyboard input)."""
         if event.type == pygame.QUIT:
             return "quit"
 
@@ -116,9 +120,9 @@ class TeamBoxUI:
                                 self.activeBoxes[teamIndex] += 1
                         else:
                             self.ids[teamIndex][boxIndex] += event.unicode
-
+    
+    #converts the image to grey scale 
     def convertToGrayscale(self, image):
-        """Convert image to grayscale."""
         grayscaleImage = image.copy()
         for x in range(grayscaleImage.get_width()):
             for y in range(grayscaleImage.get_height()):
@@ -128,7 +132,6 @@ class TeamBoxUI:
         return grayscaleImage
 
     def draw(self):
-        """Draw all UI elements."""
         mouse = pygame.mouse.get_pos()
 
         # Draw quit button
