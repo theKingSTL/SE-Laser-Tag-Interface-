@@ -33,8 +33,8 @@ class TeamBoxUI:
         #create the top labels - green and red team 
         self.labels = [
             #render (name, anti-aliasing, color)
-            self.fontTitle.render("Red Team", True, self.colorWhite),
-            self.fontTitle.render("Green Team", True, self.colorWhite)
+            self.fontTitle.render("Red Team", True, self.teamColors[0]),
+            self.fontTitle.render("Green Team", True, self.teamColors[1])
         ]
         #the instruction to be set below labels 
         self.instructions = self.fontText.render("Insert ID in the team box below", True, self.colorWhite)
@@ -43,19 +43,19 @@ class TeamBoxUI:
         self.quit = self.fontButton.render("Quit", True, self.colorWhite)
         #button for clearn and change address 
         self.clear = self.fontButton.render("Clear Game", True, self.colorWhite)
-        self.textQuit = self.fontButton.render("Change Adress", True, self.colorWhite)
+        self.textQuit = self.fontButton.render("Change Address", True, self.colorWhite)
 
         #creates params for the boxs for teams 
         self.numTeams = 2
         self.numBoxesPerTeam = 15
         #used to track how many active boxes for display
         #this starts if with one in use for some reason 
-        self.activeBoxes = [0, 0]
+        #self.activeBoxes = [0, 0]
         self.playerBoxes = self.createBoxes() #will return the player boxes - two lists of 15 boxs 
 
         #a list of a list of bools - init to all False no active boxes 
         # in our case its two lists full of 15 bools for which boxes are active for display reasons 
-        self.active = [[False] * self.numBoxesPerTeam for _ in range(self.numTeams)]
+        #self.active = [[False] * self.numBoxesPerTeam for _ in range(self.numTeams)]
         
         #same idea as above for the ids and names enter empty strings 
         self.ids = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
@@ -63,14 +63,20 @@ class TeamBoxUI:
 
     #will return a list of pygame rects 
     def createBoxes(self):
-        boxes = []
-        spacing_x = self.width // 3  
+        boxes = []  
         for teamIndex in range(self.numTeams):
             teamBoxes = []
+            yInc = 0
             for i in range(self.numBoxesPerTeam):
-                xPos = spacing_x * (teamIndex + 1) - 70  # Center boxes in each column
-                yPos = 200 + 50 * i  # Stack boxes vertically
-                rect = pygame.Rect(xPos, yPos, 140, 40)
+                if i%2 == 0:
+                    xInc= 100
+                    yInc = yInc + 56.65
+                else:
+                    xInc = 315
+                
+                xPos =  (teamIndex*640) + xInc
+                yPos = 160 + yInc
+                rect = pygame.Rect(xPos, yPos, 185, 40)
                 teamBoxes.append(rect)
             boxes.append(teamBoxes)
         return boxes
@@ -147,18 +153,18 @@ class TeamBoxUI:
 
         # Draw input boxes
         for teamIndex in range(self.numTeams):
-            for boxIndex in range(self.activeBoxes[teamIndex] + 1):
+            for boxIndex in range(self.numBoxesPerTeam):
                 box = self.playerBoxes[teamIndex][boxIndex]
-                pygame.draw.rect(self.screen, self.colorActive if self.active[teamIndex][boxIndex] else self.teamColors[teamIndex], box)
+                pygame.draw.rect(self.screen, self.teamColors[teamIndex], box)
 
                 # Render input text
-                text = self.ids[teamIndex][boxIndex]
-                textSurf = self.fontText.render(text, True, self.colorBlack)
-                self.screen.blit(textSurf, (box.x + 10, box.y + 5))
+                # text = self.ids[teamIndex][boxIndex]
+                # textSurf = self.fontText.render(text, True, self.colorBlack)
+                # self.screen.blit(textSurf, (box.x + 10, box.y + 5))
 
                 # Render player name
-                name = self.names[teamIndex][boxIndex]
-                nameSurf = self.fontText.render(name, True, self.colorWhite)
-                self.screen.blit(nameSurf, (box.x + 160, box.y + 5))
+                # name = self.names[teamIndex][boxIndex]
+                # nameSurf = self.fontText.render(name, True, self.colorWhite)
+                # self.screen.blit(nameSurf, (box.x + 160, box.y + 5))
 
         pygame.display.update()
