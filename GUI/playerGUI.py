@@ -101,117 +101,117 @@ class TeamBoxUI:
             print(f"Database error: {e}")
             return "Error"
         
-    #if id doesnt exist need to pop up box and state enter new id 
-def handleEvent(self, event):
-    if event.type == pygame.QUIT:
-        return "quit"
+        #if id doesnt exist need to pop up box and state enter new id 
+    def handleEvent(self, event):
+        if event.type == pygame.QUIT:
+            return "quit"
 
-    if event.type == pygame.MOUSEBUTTONDOWN:
-        mousePos = pygame.mouse.get_pos()
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            mousePos = pygame.mouse.get_pos()
 
-        # Check if quit button was clicked
-        quitRect = pygame.Rect(890, self.height - 100, 100, 50)
-        if quitRect.collidepoint(mousePos):
-            return "quit"  # Quit the application
+            # Check if quit button was clicked
+            quitRect = pygame.Rect(890, self.height - 100, 100, 50)
+            if quitRect.collidepoint(mousePos):
+                return "quit"  # Quit the application
 
-        # Check if clear game button was clicked
-        clearRect = pygame.Rect(self.width / 2 - 110, self.height - 100, 175, 50)
-        if clearRect.collidepoint(mousePos):
-            # Clear all IDs and usernames
-            self.ids = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
-            self.names = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
-            self.focusedBox = None  # Remove focus from any box
-            return
+            # Check if clear game button was clicked
+            clearRect = pygame.Rect(self.width / 2 - 110, self.height - 100, 175, 50)
+            if clearRect.collidepoint(mousePos):
+                # Clear all IDs and usernames
+                self.ids = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
+                self.names = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
+                self.focusedBox = None  # Remove focus from any box
+                return
 
-        # Check if change address button was clicked
-        changeRect = pygame.Rect(180, self.height - 100, 250, 50)
-        if changeRect.collidepoint(mousePos):
-            # Placeholder for change address functionality
-            print("Change Address functionality to be implemented later.")
-            return
+            # Check if change address button was clicked
+            changeRect = pygame.Rect(180, self.height - 100, 250, 50)
+            if changeRect.collidepoint(mousePos):
+                # Placeholder for change address functionality
+                print("Change Address functionality to be implemented later.")
+                return
 
-        # Check if text box was clicked
-        for teamIndex in range(self.numTeams):
-            for boxIndex, box in enumerate(self.playerBoxes[teamIndex]):
-                if box.collidepoint(mousePos):
-                    self.focusedBox = (teamIndex, boxIndex)
-                    return  # Stop checking once a box is focused
+            # Check if text box was clicked
+            for teamIndex in range(self.numTeams):
+                for boxIndex, box in enumerate(self.playerBoxes[teamIndex]):
+                    if box.collidepoint(mousePos):
+                        self.focusedBox = (teamIndex, boxIndex)
+                        return  # Stop checking once a box is focused
 
-    # Ensure event is a key press and a box is selected
-    if event.type == pygame.KEYDOWN and self.focusedBox is not None:
-        teamIndex, boxIndex = self.focusedBox
+        # Ensure event is a key press and a box is selected
+        if event.type == pygame.KEYDOWN and self.focusedBox is not None:
+            teamIndex, boxIndex = self.focusedBox
 
-        if event.key == pygame.K_BACKSPACE:
-            self.ids[teamIndex][boxIndex] = self.ids[teamIndex][boxIndex][:-1]
-        elif event.key == pygame.K_RETURN:
-            player_id = self.ids[teamIndex][boxIndex]
-            if len(player_id) != 6 or not player_id.isdigit():
-                # Display error message for invalid ID format
-                self.showErrorMessage("ID must be exactly 6 digits.")
-            else:
-                userName = self.fetchPlayerName(player_id)
-                if userName is None:
-                    userName = self.createNewUsername(player_id)
-                self.names[teamIndex][boxIndex] = userName
-                self.ids[teamIndex][boxIndex] = ""  # Clear the ID box
-                self.focusedBox = None  # Remove focus after pressing enter
-        else:
-            self.ids[teamIndex][boxIndex] += event.unicode  # Append character input
-
-def showErrorMessage(self, message):
-    # Create a surface for the error message
-    errorSurface = self.fontText.render(message, True, (255, 0, 0))  # Red text
-    errorRect = errorSurface.get_rect(center=(self.width // 2, self.height - 150))
-    self.screen.blit(errorSurface, errorRect)
-    pygame.display.update()
-    pygame.time.delay(2000)  # Display the error message for 2 seconds
-
-def createNewUsername(self, player_id):
-    # Create a pop-up input box for the new username
-    inputBox = pygame.Rect(self.width // 2 - 150, self.height // 2 - 25, 300, 50)
-    inputText = ""
-    inputActive = True
-
-    while inputActive:
-        for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:
-                    inputActive = False
-                elif event.key == pygame.K_BACKSPACE:
-                    inputText = inputText[:-1]
+            if event.key == pygame.K_BACKSPACE:
+                self.ids[teamIndex][boxIndex] = self.ids[teamIndex][boxIndex][:-1]
+            elif event.key == pygame.K_RETURN:
+                player_id = self.ids[teamIndex][boxIndex]
+                if len(player_id) != 6 or not player_id.isdigit():
+                    # Display error message for invalid ID format
+                    self.showErrorMessage("ID must be exactly 6 digits.")
                 else:
-                    if len(inputText) < 14:  # Limit username to 14 characters
-                        inputText += event.unicode
-            elif event.type == pygame.QUIT:
-                return "User"  # Default username if the user closes the window
+                    userName = self.fetchPlayerName(player_id)
+                    if userName is None:
+                        userName = self.createNewUsername(player_id)
+                    self.names[teamIndex][boxIndex] = userName
+                    self.ids[teamIndex][boxIndex] = ""  # Clear the ID box
+                    self.focusedBox = None  # Remove focus after pressing enter
+            else:
+                self.ids[teamIndex][boxIndex] += event.unicode  # Append character input
 
-        # Draw the pop-up box
-        self.screen.blit(self.scaledBgImage, (self.bgX, self.bgY))  # Redraw background
-        pygame.draw.rect(self.screen, (255, 255, 255), inputBox)  # White input box
-        textSurface = self.fontText.render("Enter new username (14 chars max):", True, (0, 0, 0))
-        textRect = textSurface.get_rect(center=(self.width // 2, self.height // 2 - 50))
-        self.screen.blit(textSurface, textRect)
-
-        # Render the input text
-        inputSurface = self.fontText.render(inputText, True, (0, 0, 0))
-        self.screen.blit(inputSurface, (inputBox.x + 10, inputBox.y + 10))
-
+    def showErrorMessage(self, message):
+        # Create a surface for the error message
+        errorSurface = self.fontText.render(message, True, (255, 0, 0))  # Red text
+        errorRect = errorSurface.get_rect(center=(self.width // 2, self.height - 150))
+        self.screen.blit(errorSurface, errorRect)
         pygame.display.update()
+        pygame.time.delay(2000)  # Display the error message for 2 seconds
 
-    # Add the new username and ID to the database
-    if inputText:
-        try:
-            conn = self.database.connect()
-            cursor = conn.cursor()
-            cursor.execute("INSERT INTO players (id, codename) VALUES (%s, %s)", (player_id, inputText))
-            conn.commit()
-            conn.close()
-        except psycopg2.Error as e:
-            print(f"Database error: {e}")
-            return "User"  # Default username if database insertion fails
-        return inputText
-    else:
-        return "User"  # Default username if no input is provided
+    def createNewUsername(self, player_id):
+        # Create a pop-up input box for the new username
+        inputBox = pygame.Rect(self.width // 2 - 150, self.height // 2 - 25, 300, 50)
+        inputText = ""
+        inputActive = True
+
+        while inputActive:
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        inputActive = False
+                    elif event.key == pygame.K_BACKSPACE:
+                        inputText = inputText[:-1]
+                    else:
+                        if len(inputText) < 14:  # Limit username to 14 characters
+                            inputText += event.unicode
+                elif event.type == pygame.QUIT:
+                    return "User"  # Default username if the user closes the window
+
+            # Draw the pop-up box
+            self.screen.blit(self.scaledBgImage, (self.bgX, self.bgY))  # Redraw background
+            pygame.draw.rect(self.screen, (255, 255, 255), inputBox)  # White input box
+            textSurface = self.fontText.render("Enter new username (14 chars max):", True, (0, 0, 0))
+            textRect = textSurface.get_rect(center=(self.width // 2, self.height // 2 - 50))
+            self.screen.blit(textSurface, textRect)
+
+            # Render the input text
+            inputSurface = self.fontText.render(inputText, True, (0, 0, 0))
+            self.screen.blit(inputSurface, (inputBox.x + 10, inputBox.y + 10))
+
+            pygame.display.update()
+
+        # Add the new username and ID to the database
+        if inputText:
+            try:
+                conn = self.database.connect()
+                cursor = conn.cursor()
+                cursor.execute("INSERT INTO players (id, codename) VALUES (%s, %s)", (player_id, inputText))
+                conn.commit()
+                conn.close()
+            except psycopg2.Error as e:
+                print(f"Database error: {e}")
+                return "User"  # Default username if database insertion fails
+            return inputText
+        else:
+            return "User"  # Default username if no input is provided
 
         #converts the image to grey scale 
     def convertToGrayscale(self, image):

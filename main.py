@@ -1,5 +1,4 @@
 import pygame
-import sys
 import time
 from GUI.playerGUI import *  # Ensure playerGUI.py is properly structured as a module
 from Server.database import *  # If needed for player data
@@ -9,8 +8,8 @@ pygame.init()
 
 # Create the game screen (1280x800)
 SCREEN_WIDTH, SCREEN_HEIGHT = 1280, 800
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Photon-System")
+#screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+#pygame.display.set_caption("Photon-System")
 
 # Connect to the database
 db = PlayerDatabase()
@@ -68,8 +67,6 @@ def playerGUIrun(screen, db):
 
 def main():
     pygame.init()
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))  # Set window size
-    pygame.display.set_caption("Game Start")
     
     image = pygame.image.load("Photos/logo.jpg")  # Change to your image path
     x, y, scaledImage = getAspect(image, screen)
@@ -78,6 +75,8 @@ def main():
     screen.fill((0, 0, 0))
 
     # Draw the image centered
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))  # Set window size
+    pygame.display.set_caption("Game Start")
     screen.blit(scaledImage, (x, y))
     pygame.display.flip()
     
