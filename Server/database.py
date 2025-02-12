@@ -7,9 +7,9 @@ class PlayerDatabase:
         self.connection_params = {
             'dbname': 'photon',
             'user': 'student',
-            'password': 'student',
-            'host': 'localhost',
-            'port': '5432'
+            #'password': 'student',
+            #'host': 'localhost',
+            #'port': '5432'
         }
 
     def connect(self):

@@ -82,7 +82,7 @@ def main():
     screen.blit(scaledImage, (x, y))
     pygame.display.flip()
     
-    #time.sleep(3)  # Show image for 3 seconds
+    time.sleep(3)  # Show image for 3 seconds
     
     # Run the player entry screen
     playerGUIrun(screen, db)

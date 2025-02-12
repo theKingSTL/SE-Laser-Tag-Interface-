@@ -177,6 +177,6 @@ class TeamBoxUI:
                 # Render player name
                 name = self.names[teamIndex][boxIndex]
                 nameSurf = self.fontText.render(name, True, self.colorWhite)
-                self.screen.blit(nameSurf, (box.x + 160, box.y + 5))
+                self.screen.blit(nameSurf, (box.x + 10, box.y + 5))
 
         pygame.display.update()
