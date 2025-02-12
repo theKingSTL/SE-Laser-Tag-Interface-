@@ -26,9 +26,9 @@ class TeamBoxUI:
         self.colorActive = pygame.Color("cornsilk1")
         self.teamColors = [pygame.Color("red"), pygame.Color("green3")]
         #fonts to use 
-        self.fontTitle = pygame.font.SysFont("Corbel", 70, bold=True)
+        self.fontTitle = pygame.font.SysFont("Corbel", 80, bold=False)
         self.fontButton = pygame.font.SysFont("Corbel", 35)
-        self.fontText = pygame.font.SysFont("Corbel", 30)
+        self.fontText = pygame.font.SysFont("Corbel", 40)
 
         #create the top labels - green and red team 
         self.labels = [
@@ -38,7 +38,7 @@ class TeamBoxUI:
         ]
         
         #the instruction to be set below labels 
-        self.instructions = self.fontText.render("Type ID in box", True, self.colorWhite)
+        self.instructions = self.fontText.render("Type Player IDs into their respective team boxes below. (IDs are 6 digits)", True, self.colorWhite)
 
         #quit button (name, anti-aliasing, color)
         self.quit = self.fontButton.render("Quit", True, self.colorWhite)
@@ -128,11 +128,21 @@ class TeamBoxUI:
     #converts the image to grey scale 
     def convertToGrayscale(self, image):
         grayscaleImage = image.copy()
+        
         for x in range(grayscaleImage.get_width()):
             for y in range(grayscaleImage.get_height()):
                 r, g, b, a = grayscaleImage.get_at((x, y))
+                
+                # Convert to grayscale
                 gray = int(0.299 * r + 0.587 * g + 0.114 * b)
+                
+                # Reduce brightness by multiplying (e.g., 0.7 for a dimmed effect)
+                dimFactor = 0.7  # Adjust this between 0.5 - 0.9 for different dim levels
+                gray = int(gray * dimFactor)
+                
+                # Set pixel with new dimmed grayscale value
                 grayscaleImage.set_at((x, y), (gray, gray, gray, a))
+
         return grayscaleImage
 
     def draw(self):
@@ -141,27 +151,47 @@ class TeamBoxUI:
         # Draw quit button
         quitRect = pygame.Rect(890, self.height - 100, 100, 50)
         pygame.draw.rect(self.screen, 'cornsilk4', quitRect)
-        self.screen.blit(self.quit, (quitRect.x + 20, quitRect.y+7.5))
+        quit_text_rect = self.quit.get_rect(center=quitRect.center)
+        self.screen.blit(self.quit, quit_text_rect)
 
-        # Draw resest button
+        # Draw reset button
         resetRect = pygame.Rect(self.width/2 - 110, self.height - 100, 175, 50)
         pygame.draw.rect(self.screen, 'cornsilk4', resetRect)
-        self.screen.blit(self.clear, (resetRect.x+7.5, resetRect.y+7.5))
+        reset_text_rect = self.clear.get_rect(center=resetRect.center)
+        self.screen.blit(self.clear, reset_text_rect)
 
         # Draw change network button
         changeRect = pygame.Rect(180, self.height - 100, 250, 50)
         pygame.draw.rect(self.screen, 'cornsilk4', changeRect)
-        self.screen.blit(self.textQuit, (changeRect.x+10, changeRect.y+7.5))
+        change_text_rect = self.textQuit.get_rect(center=changeRect.center)
+        self.screen.blit(self.textQuit, change_text_rect)
 
-        # Draw team labels
-        spacing_x = 640
-        for i, label in enumerate(self.labels):
-            label = pygame.transform.scale(label, (200, label.get_height()))
-            self.screen.blit(label, (spacing_x * i + 255, 30))
-        
-        # Draw instructions
-        self.instructions = pygame.transform.scale(self.instructions, (self.instructions.get_width(), 70))  
-        self.screen.blit(self.instructions, (self.width // 2 - self.instructions.get_width() // 2, 110))
+        # Assuming self.fontTitle is already set up like this:
+        # self.fontTitle = pygame.font.Font(None, 48)  # Adjust font size as needed
+        # Spacing and positioning
+        spacingX = 640
+        textColor = (255, 255, 255)  # White text for general readability
+
+        # Calculate the position to center the text for each team
+        redTeamText = self.labels[0]  # Red Team text
+        greenTeamText = self.labels[1]  # Green Team text
+
+        # Get the rects for each text to center them
+        redTeamRect = redTeamText.get_rect(center=(300, 70))  # Adjusted y position by 40 pixels
+        greenTeamRect = greenTeamText.get_rect(center=(300 + 640, 70))  # Adjusted y position by 40 pixels
+
+        # Draw the team names with proper positioning
+        self.screen.blit(redTeamText, redTeamRect)
+        self.screen.blit(greenTeamText, greenTeamRect)
+
+        # Instructions rendering
+        instructionsFont = pygame.font.Font(None, 36)  # Smaller font for instructions
+        instructionsText = self.instructions
+        # Adjust y position of instructions to 150 (down 40 pixels)
+        instructionsRect = instructionsText.get_rect(center=(self.width // 2, 150))
+        self.screen.blit(instructionsText, instructionsRect)
+
+
 
         # Draw input boxes
         for teamIndex in range(self.numTeams):
