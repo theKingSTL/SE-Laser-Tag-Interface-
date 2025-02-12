@@ -2,6 +2,8 @@ import pygame
 import sys
 import os
 import psycopg2
+import time  
+
 
 #adding parent directory to path so the getAspect method can be used from main 
 sys.path.append(os.path.abspath('../'))
@@ -40,6 +42,10 @@ class TeamBoxUI:
         #the instruction to be set below labels 
         self.instructions = self.fontText.render("Type Player IDs into their respective team boxes below. (IDs are 6 digits)", True, self.colorWhite)
 
+        #used for the box cursor 
+        self.focusedBox = None  # Track the focused box
+        self.cursorVisible = False  # Track cursor visibility
+        self.lastCursorToggle = time.time()  # Track the last time the cursor toggled
         #quit button (name, anti-aliasing, color)
         self.quit = self.fontButton.render("Quit", True, self.colorWhite)
         #button for clearn and change address 
@@ -94,41 +100,123 @@ class TeamBoxUI:
         except psycopg2.Error as e:
             print(f"Database error: {e}")
             return "Error"
+        
+    #if id doesnt exist need to pop up box and state enter new id 
+def handleEvent(self, event):
+    if event.type == pygame.QUIT:
+        return "quit"
 
-    def handleEvent(self, event):
-        if event.type == pygame.QUIT:
-            return "quit"
+    if event.type == pygame.MOUSEBUTTONDOWN:
+        mousePos = pygame.mouse.get_pos()
 
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            mousePos = pygame.mouse.get_pos()
-            
-            # Check if quit button was clicked
-            if (self.width - 150 <= mousePos[0] <= self.width - 10) and (self.height - 50 <= mousePos[1] <= self.height - 10):
-                return "quit"
-            
-            # Check if text box was clicked
-            for teamIndex in range(self.numTeams):
-                for boxIndex, box in enumerate(self.playerBoxes[teamIndex]):
-                    if box.collidepoint(mousePos):
-                        self.focusedBox = (teamIndex, boxIndex)
-                        return
+        # Check if quit button was clicked
+        quitRect = pygame.Rect(890, self.height - 100, 100, 50)
+        if quitRect.collidepoint(mousePos):
+            return "quit"  # Quit the application
 
-        if event.type == pygame.KEYDOWN and hasattr(self, 'focusedBox'):
-            teamIndex, boxIndex = self.focusedBox
-            
-            if event.key == pygame.K_BACKSPACE:
-                self.ids[teamIndex][boxIndex] = self.ids[teamIndex][boxIndex][:-1]
-            elif event.key == pygame.K_RETURN:
-                player_id = self.ids[teamIndex][boxIndex]
-                self.names[teamIndex][boxIndex] = self.fetchPlayerName(player_id)
-                self.focusedBox = None  # Remove focus after pressing enter
+        # Check if clear game button was clicked
+        clearRect = pygame.Rect(self.width / 2 - 110, self.height - 100, 175, 50)
+        if clearRect.collidepoint(mousePos):
+            # Clear all IDs and usernames
+            self.ids = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
+            self.names = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
+            self.focusedBox = None  # Remove focus from any box
+            return
+
+        # Check if change address button was clicked
+        changeRect = pygame.Rect(180, self.height - 100, 250, 50)
+        if changeRect.collidepoint(mousePos):
+            # Placeholder for change address functionality
+            print("Change Address functionality to be implemented later.")
+            return
+
+        # Check if text box was clicked
+        for teamIndex in range(self.numTeams):
+            for boxIndex, box in enumerate(self.playerBoxes[teamIndex]):
+                if box.collidepoint(mousePos):
+                    self.focusedBox = (teamIndex, boxIndex)
+                    return  # Stop checking once a box is focused
+
+    # Ensure event is a key press and a box is selected
+    if event.type == pygame.KEYDOWN and self.focusedBox is not None:
+        teamIndex, boxIndex = self.focusedBox
+
+        if event.key == pygame.K_BACKSPACE:
+            self.ids[teamIndex][boxIndex] = self.ids[teamIndex][boxIndex][:-1]
+        elif event.key == pygame.K_RETURN:
+            player_id = self.ids[teamIndex][boxIndex]
+            if len(player_id) != 6 or not player_id.isdigit():
+                # Display error message for invalid ID format
+                self.showErrorMessage("ID must be exactly 6 digits.")
             else:
-                self.ids[teamIndex][boxIndex] += event.unicode
+                userName = self.fetchPlayerName(player_id)
+                if userName is None:
+                    userName = self.createNewUsername(player_id)
+                self.names[teamIndex][boxIndex] = userName
+                self.ids[teamIndex][boxIndex] = ""  # Clear the ID box
+                self.focusedBox = None  # Remove focus after pressing enter
+        else:
+            self.ids[teamIndex][boxIndex] += event.unicode  # Append character input
 
-    #converts the image to grey scale 
+def showErrorMessage(self, message):
+    # Create a surface for the error message
+    errorSurface = self.fontText.render(message, True, (255, 0, 0))  # Red text
+    errorRect = errorSurface.get_rect(center=(self.width // 2, self.height - 150))
+    self.screen.blit(errorSurface, errorRect)
+    pygame.display.update()
+    pygame.time.delay(2000)  # Display the error message for 2 seconds
+
+def createNewUsername(self, player_id):
+    # Create a pop-up input box for the new username
+    inputBox = pygame.Rect(self.width // 2 - 150, self.height // 2 - 25, 300, 50)
+    inputText = ""
+    inputActive = True
+
+    while inputActive:
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    inputActive = False
+                elif event.key == pygame.K_BACKSPACE:
+                    inputText = inputText[:-1]
+                else:
+                    if len(inputText) < 14:  # Limit username to 14 characters
+                        inputText += event.unicode
+            elif event.type == pygame.QUIT:
+                return "User"  # Default username if the user closes the window
+
+        # Draw the pop-up box
+        self.screen.blit(self.scaledBgImage, (self.bgX, self.bgY))  # Redraw background
+        pygame.draw.rect(self.screen, (255, 255, 255), inputBox)  # White input box
+        textSurface = self.fontText.render("Enter new username (14 chars max):", True, (0, 0, 0))
+        textRect = textSurface.get_rect(center=(self.width // 2, self.height // 2 - 50))
+        self.screen.blit(textSurface, textRect)
+
+        # Render the input text
+        inputSurface = self.fontText.render(inputText, True, (0, 0, 0))
+        self.screen.blit(inputSurface, (inputBox.x + 10, inputBox.y + 10))
+
+        pygame.display.update()
+
+    # Add the new username and ID to the database
+    if inputText:
+        try:
+            conn = self.database.connect()
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO players (id, codename) VALUES (%s, %s)", (player_id, inputText))
+            conn.commit()
+            conn.close()
+        except psycopg2.Error as e:
+            print(f"Database error: {e}")
+            return "User"  # Default username if database insertion fails
+        return inputText
+    else:
+        return "User"  # Default username if no input is provided
+
+        #converts the image to grey scale 
     def convertToGrayscale(self, image):
         grayscaleImage = image.copy()
-        
+            
         for x in range(grayscaleImage.get_width()):
             for y in range(grayscaleImage.get_height()):
                 r, g, b, a = grayscaleImage.get_at((x, y))
@@ -148,29 +236,36 @@ class TeamBoxUI:
     def draw(self):
         mouse = pygame.mouse.get_pos()
 
-        # Draw quit button
+        # Draw quit button with hover effect
         quitRect = pygame.Rect(890, self.height - 100, 100, 50)
-        pygame.draw.rect(self.screen, 'cornsilk4', quitRect)
+        if quitRect.collidepoint(mouse):
+            pygame.draw.rect(self.screen, 'cornsilk3', quitRect)  # Lighter color when hovered
+        else:
+            pygame.draw.rect(self.screen, 'cornsilk4', quitRect)
         quit_text_rect = self.quit.get_rect(center=quitRect.center)
         self.screen.blit(self.quit, quit_text_rect)
 
-        # Draw reset button
-        resetRect = pygame.Rect(self.width/2 - 110, self.height - 100, 175, 50)
-        pygame.draw.rect(self.screen, 'cornsilk4', resetRect)
+        # Draw reset button with hover effect
+        resetRect = pygame.Rect(self.width / 2 - 110, self.height - 100, 175, 50)
+        if resetRect.collidepoint(mouse):
+            pygame.draw.rect(self.screen, 'cornsilk3', resetRect)  # Lighter color when hovered
+        else:
+            pygame.draw.rect(self.screen, 'cornsilk4', resetRect)
         reset_text_rect = self.clear.get_rect(center=resetRect.center)
         self.screen.blit(self.clear, reset_text_rect)
 
-        # Draw change network button
+        # Draw change network button with hover effect
         changeRect = pygame.Rect(180, self.height - 100, 250, 50)
-        pygame.draw.rect(self.screen, 'cornsilk4', changeRect)
+        if changeRect.collidepoint(mouse):
+            pygame.draw.rect(self.screen, 'cornsilk3', changeRect)  # Lighter color when hovered
+        else:
+            pygame.draw.rect(self.screen, 'cornsilk4', changeRect)
         change_text_rect = self.textQuit.get_rect(center=changeRect.center)
         self.screen.blit(self.textQuit, change_text_rect)
 
         # Assuming self.fontTitle is already set up like this:
         # self.fontTitle = pygame.font.Font(None, 48)  # Adjust font size as needed
         # Spacing and positioning
-        spacingX = 640
-        textColor = (255, 255, 255)  # White text for general readability
 
         # Calculate the position to center the text for each team
         redTeamText = self.labels[0]  # Red Team text
@@ -184,14 +279,9 @@ class TeamBoxUI:
         self.screen.blit(redTeamText, redTeamRect)
         self.screen.blit(greenTeamText, greenTeamRect)
 
-        # Instructions rendering
-        instructionsFont = pygame.font.Font(None, 36)  # Smaller font for instructions
-        instructionsText = self.instructions
         # Adjust y position of instructions to 150 (down 40 pixels)
-        instructionsRect = instructionsText.get_rect(center=(self.width // 2, 150))
-        self.screen.blit(instructionsText, instructionsRect)
-
-
+        instructionsRect = self.instructions.get_rect(center=(self.width // 2, 150))
+        self.screen.blit(self.instructions, instructionsRect)
 
         # Draw input boxes
         for teamIndex in range(self.numTeams):
@@ -208,5 +298,22 @@ class TeamBoxUI:
                 name = self.names[teamIndex][boxIndex]
                 nameSurf = self.fontText.render(name, True, self.colorWhite)
                 self.screen.blit(nameSurf, (box.x + 10, box.y + 5))
+
+        #draw cursor in the focused box
+        if hasattr(self, 'focusedBox') and self.focusedBox is not None:
+            teamIndex, boxIndex = self.focusedBox
+            box = self.playerBoxes[teamIndex][boxIndex]
+
+            # Toggle cursor visibility every 500ms
+            if time.time() - self.lastCursorToggle > 0.5:
+                self.cursorVisible = not self.cursorVisible
+                self.lastCursorToggle = time.time()
+
+            if self.cursorVisible:
+                # Calculate cursor position (end of the text)
+                text = self.ids[teamIndex][boxIndex]
+                textSurf = self.fontText.render(text, True, self.colorBlack)
+                cursorX = box.x + 10 + textSurf.get_width()  # Position cursor at the end of the text
+                pygame.draw.line(self.screen, self.colorBlack, (cursorX, box.y + 5), (cursorX, box.y + box.height - 5))
 
         pygame.display.update()
