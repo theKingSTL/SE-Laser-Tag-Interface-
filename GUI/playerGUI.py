@@ -31,6 +31,7 @@ class TeamBoxUI:
         self.fontTitle = pygame.font.SysFont("Corbel", 80, bold=False)
         self.fontButton = pygame.font.SysFont("Corbel", 35)
         self.fontText = pygame.font.SysFont("Corbel", 40)
+        self.fontUsername = pygame.font.SysFont("Courier", 25)  # Monospace font
 
         #create the top labels - green and red team 
         self.labels = [
@@ -156,18 +157,20 @@ class TeamBoxUI:
                     self.ids[teamIndex][boxIndex] = ""  # Clear the ID box
                     self.focusedBox = None  # Remove focus after pressing enter
             else:
-                self.ids[teamIndex][boxIndex] += event.unicode  # Append character input
+                # Allow only digits and limit to 6 characters
+                if event.unicode.isdigit() and len(self.ids[teamIndex][boxIndex]) < 6:
+                    self.ids[teamIndex][boxIndex] += event.unicode
 
     def showErrorMessage(self, message):
         errorSurface = self.fontText.render(message, True, (255, 0, 0))  # Red text
-        errorRect = errorSurface.get_rect(center=(self.width // 2, self.height - 750))
+        errorRect = errorSurface.get_rect(center=(self.width // 2.05, self.height - 610))
         
         # Draw error message
         self.screen.blit(errorSurface, errorRect)
         pygame.display.update()
 
         # Start a timer to remove the error message after 3 seconds
-        pygame.time.set_timer(pygame.USEREVENT, 3000)  
+        pygame.time.set_timer(pygame.USEREVENT, 2000)  
 
         # Wait for the timer event in the main loop to remove the message
         running = True
@@ -185,9 +188,6 @@ class TeamBoxUI:
         background = pygame.Surface((rect.width, rect.height))
         background.fill((0, 0, 0))  # Assuming a black background; change if needed
         self.screen.blit(background, rect.topleft)
-        
-        # Redraw any objects that were in that area
-        self.redrawGameObjects(rect)  
 
         pygame.display.update(rect)  # Update only that region
 
@@ -198,6 +198,8 @@ class TeamBoxUI:
         inputBox = pygame.Rect(self.width // 2 - 150, self.height // 2 - 25, 300, 50)
         inputText = ""
         inputActive = True
+        saved_screen = self.screen.copy()
+
 
         while inputActive:
             for event in pygame.event.get():
@@ -207,7 +209,7 @@ class TeamBoxUI:
                     elif event.key == pygame.K_BACKSPACE:
                         inputText = inputText[:-1]
                     else:
-                        if len(inputText) < 14:  # Limit username to 14 characters
+                        if len(inputText) < 12:  # Limit username to 12 characters
                             inputText += event.unicode
                 elif event.type == pygame.QUIT:
                     return "User"  # Default username if the user closes the window
@@ -224,13 +226,13 @@ class TeamBoxUI:
             pygame.draw.rect(self.screen, (0, 0, 0), inputBox, 2, border_radius=10)  # Black outline
 
             # **Instruction text**
-            textSurface = self.fontText.render("Enter new username (14 chars max):", True, (255, 255, 255))
+            textSurface = self.fontText.render(f"Enter new username for new ID: {player_id} (12 chars max):", True, (255, 255, 255))
             textRect = textSurface.get_rect(center=(self.width // 2, self.height // 2 - 50))
             self.screen.blit(textSurface, textRect)
 
             # **Render input text inside box**
             inputSurface = self.fontText.render(inputText, True, (0, 0, 0))
-            self.screen.blit(inputSurface, (inputBox.x + 10, inputBox.y + 10))
+            self.screen.blit(inputSurface, (inputBox.x + 5, inputBox.y + 7.5))
 
             pygame.display.update()  # Refresh only the affected area
         # Add the new username and ID to the database
@@ -246,7 +248,7 @@ class TeamBoxUI:
                 return "User"  # Default username if database insertion fails
             return inputText
         else:
-            return "User"  # Default username if no input is provided
+            return ""  # Default username if no input is provided
 
         #converts the image to grey scale 
     def convertToGrayscale(self, image):
@@ -331,7 +333,7 @@ class TeamBoxUI:
 
                 # Render player name
                 name = self.names[teamIndex][boxIndex]
-                nameSurf = self.fontText.render(name, True, self.colorWhite)
+                nameSurf = self.fontUsername.render(name, True, self.colorWhite)
                 self.screen.blit(nameSurf, (box.x + 5, box.y + 10))
 
         #draw cursor in the focused box
