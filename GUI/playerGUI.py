@@ -2,12 +2,15 @@ import pygame
 import sys
 import os
 import psycopg2
-import time  
-
+import time
+from ..Server.updClient import *
 
 #adding parent directory to path so the getAspect method can be used from main 
 sys.path.append(os.path.abspath('../'))
 from main import getAspect
+
+def randomEquip():
+    return 1
 
 #class for player selection UI 
 class TeamBoxUI:
@@ -70,6 +73,8 @@ class TeamBoxUI:
         self.ids = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
         self.names = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
 
+        #create the client UDP socket
+        self.clientUDP = ClientSocket()
     #will return a list of pygame rects 
     def createBoxes(self):
         boxes = []  
@@ -159,6 +164,8 @@ class TeamBoxUI:
                     if userName is None:
                         userName = self.createNewUsername(player_id)
                     self.names[teamIndex][boxIndex] = userName
+                    #send equipment id
+                    self.clientUDP.sendClientMessage(randomEquip)
                     self.ids[teamIndex][boxIndex] = ""  # Clear the ID box
 
                     # Automatically focus the next box in the same team

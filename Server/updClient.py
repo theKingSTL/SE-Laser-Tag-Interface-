@@ -9,7 +9,7 @@ class ClientSocket:
         self.bufferSize = 1024
         #self.networkObject = {"network":self.serverAdressPort}
 
-    def send_server_mess_from_client(self, content):
+    def sendClientMessage(self, content):
         self.msgFromClient       = content
         self.bytesToSend         = self.msgFromClient.encode()
 
@@ -33,14 +33,8 @@ class ClientSocket:
             #close the socket love
             UDPClientSocket.close()
     
-    def changeNetwork(self, new_ipaddress, new_port):
+    def changeNetwork(self, new_ipaddress):
         ip = str(new_ipaddress)
-        self.serverAdressPort = (ip, new_port)
-
-    def transmit_equipment(self, eq_code):
-        #message = ("Equipment ID", eq_code)
-        self.send_server_mess_from_client(self, eq_code)
-
-    
+        self.serverAdressPort = ((ip), self.serverAdressPort[1])
     
 #send_server_mess_from_client("ur mom")
