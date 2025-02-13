@@ -200,8 +200,9 @@ class TeamBoxUI:
                 else:
                     userName = self.fetchPlayerName(player_id)
                     if userName is None:
-                        userName = self.createNewUsername(player_id)
-                    equipID = self.createEquipmentID()
+                        userName, equipID = self.createNewUsername(player_id)
+                    else:
+                        equipID = self.createEquipmentID()
                     self.names[teamIndex][boxIndex] = userName
                     self.Client.sendClientMessage(str(equipID))
                     self.data[self.ids[teamIndex][boxIndex]] = equipID
@@ -286,7 +287,9 @@ class TeamBoxUI:
                         if len(inputText) < 13:  # Limit username to 14 characters
                             inputText += event.unicode  # Add the typed character
                 elif event.type == pygame.QUIT:
-                    return "User"  # Default username if the user closes the window
+                    self.screen.blit(saved_screen, (0, 0))
+                    pygame.display.update()
+                    return "", None  # Default username if the user closes the window
 
             # Draw the pop-up background (Photos/logo2.jpg)
             self.screen.blit(self.grayscaleBg , (self.bgX, self.bgY))
@@ -315,7 +318,7 @@ class TeamBoxUI:
                 pygame.draw.line(self.screen, (0, 0, 0), (cursorX, inputBox.y + 5), (cursorX, inputBox.y + inputBox.height - 5))
 
             pygame.display.update()  # Refresh the screen
-
+        equipID = self.createEquipmentID()
         # Restore the original screen state (remove the pop-up)
         self.screen.blit(saved_screen, (0, 0))
         pygame.display.update()
@@ -332,17 +335,17 @@ class TeamBoxUI:
 
                 if existingUser:
                     self.showErrorMessage("User Already exists")
-                    return ""  # Return default or handle differently
+                    return "", None  # Return default or handle differently
         
                 cursor.execute("INSERT INTO players (id, codename) VALUES (%s, %s)", (player_id, inputText))
                 conn.commit()
                 conn.close()
             except psycopg2.Error as e:
                 print(f"Database error: {e}")
-                return "User"  # Default username if database insertion fails
-            return inputText
+                return "", None  # Default username if database insertion fails
+            return inputText, equipID
         else:
-            return ""  # Default username if no input is provide
+            return "", None  # Default username if no input is provide
     
     def createNewIP(self):
         saved_screen = self.screen.copy()
@@ -351,6 +354,10 @@ class TeamBoxUI:
         inputActive = True
         cursorVisible = True
         lastCursorToggle = time.time()
+
+        # Error message variables
+        showError = False
+        errorStartTime = 0  # Tracks when the error message was first displayed
 
         while inputActive:
             currentTime = time.time()
@@ -362,42 +369,71 @@ class TeamBoxUI:
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
-                        inputActive = False
+                        if len(inputText) <= 20:  # Validate input length
+                            inputActive = False
+                        else:
+                            # Show error message if input exceeds 20 characters
+                            showError = True
+                            errorStartTime = currentTime
                     elif event.key == pygame.K_BACKSPACE:
                         inputText = inputText[:-1]
+                        showError = False  # Hide error message when user starts typing
                     else:
-                        if len(inputText) < 20:
+                        if len(inputText) < 18:  # Limit input to 20 characters
                             inputText += event.unicode
+                        else:
+                            # Show error message if input exceeds 20 characters
+                            showError = True
+                            errorStartTime = currentTime
                 elif event.type == pygame.QUIT:
-                    return "New_IP"
+                    self.screen.blit(saved_screen, (0, 0))
+                    pygame.display.update()
+                    return "127.0.0.1"
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     changeRect = pygame.Rect(180, self.height - 100, 250, 50)
                     if changeRect.collidepoint(mousePos):
                         return self.createNewIP()
 
+            # Draw the pop-up background
             self.screen.blit(self.grayscaleBg, (self.bgX, self.bgY))
             overlay = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
             overlay.fill((0, 0, 0, 128))
             self.screen.blit(overlay, (0, 0))
+
+            # Draw the input box
             pygame.draw.rect(self.screen, (255, 255, 255), inputBox, border_radius=10)
             pygame.draw.rect(self.screen, (0, 0, 0), inputBox, 2, border_radius=10)
-            textSurface = self.fontText.render("Enter new IP for server (20 chars max):", True, (255, 255, 255))
+
+            # Render the instruction text
+            textSurface = self.fontText.render("Enter new IP for server (18 chars max):", True, (255, 255, 255))
             textRect = textSurface.get_rect(center=(self.width // 2, self.height // 2 - 50))
             self.screen.blit(textSurface, textRect)
+
+            # Render the input text inside the box
             inputSurface = self.fontText.render(inputText, True, (0, 0, 0))
             self.screen.blit(inputSurface, (inputBox.x + 5, inputBox.y + 7.5))
 
+            # Draw the cursor if it's visible
             if cursorVisible:
                 cursorX = inputBox.x + 10 + inputSurface.get_width()
                 pygame.draw.line(self.screen, (0, 0, 0), (cursorX, inputBox.y + 5), (cursorX, inputBox.y + inputBox.height - 5))
+
+            # Display error message if input exceeds 20 characters and within the 3-second window
+            if showError and (currentTime - errorStartTime <= 3):
+                errorSurface = self.fontText.render("Error: IP must be 20 characters or less.", True, (255, 0, 0))
+                errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
+                self.screen.blit(errorSurface, errorRect)
+            else:
+                showError = False  # Hide error message after 3 seconds
+
             pygame.display.update()
 
+        # Restore the original screen state (remove the pop-up)
         self.screen.blit(saved_screen, (0, 0))
         pygame.display.update()
-        
+
+        # Return the valid IP or a default value
         return inputText if inputText else "New_IP"
-
-
     def createEquipmentID(self):
         # Save the current screen state (background and UI elements)
         saved_screen = self.screen.copy()
@@ -436,7 +472,9 @@ class TeamBoxUI:
                             inputText += event.unicode  # Add the typed character
                             showError = False  # Hide error message when user starts typing
                 elif event.type == pygame.QUIT:
-                    return None  # Return None if the user closes the window
+                    self.screen.blit(saved_screen, (0, 0))
+                    pygame.display.update()
+                    return None
 
             # Draw the pop-up background (Photos/logo2.jpg)
             self.screen.blit(self.grayscaleBg, (self.bgX, self.bgY))
@@ -499,7 +537,6 @@ class TeamBoxUI:
                 grayscaleImage.set_at((x, y), (gray, gray, gray, a))
 
         return grayscaleImage
-
     def draw(self):
         mouse = pygame.mouse.get_pos()
 
@@ -512,23 +549,22 @@ class TeamBoxUI:
         quit_text_rect = self.quit.get_rect(center=quitRect.center)
         self.screen.blit(self.quit, quit_text_rect)
 
-        # Define the reset button rectangle
+        # Draw reset button with hover effect
         resetRect = pygame.Rect(self.width / 2 - 110, self.height - 100, 175, 100)
-
-        # Change button color when hovered
         if resetRect.collidepoint(mouse):
             pygame.draw.rect(self.screen, 'cornsilk3', resetRect)  # Lighter color when hovered
         else:
             pygame.draw.rect(self.screen, 'cornsilk4', resetRect)
 
-        # Render the main text ("Reset") and center it in the top half of the button
-        reset_text = self.font.render("Reset", True, (0, 0, 0))  # Use your desired font and color
-        reset_text_rect = reset_text.get_rect(center=(resetRect.centerx, resetRect.centery - resetRect.height // 4))  # Top half
-        self.screen.blit(reset_text, reset_text_rect)
+        # Render the main text ("Clear Game") and center it in the top half of the button
+        clear_text = self.fontButton.render("Clear Game", True, (255,255,255))  # Black text
+        clear_text_rect = clear_text.get_rect(center=(resetRect.centerx, resetRect.centery - resetRect.height // 4))  # Top half
+        self.screen.blit(clear_text, clear_text_rect)
 
         # Render the secondary text ("[F5]") and center it in the bottom half of the button
-        f5_text = self.font.render("[F5]", True, (0, 0, 0))  # Use your desired font and color
+        f5_text = self.fontButton.render("[F5]", True, (255, 255, 255))  # Black text
         f5_text_rect = f5_text.get_rect(center=(resetRect.centerx, resetRect.centery + resetRect.height // 4))  # Bottom half
+        self.screen.blit(f5_text, f5_text_rect)
         self.screen.blit(f5_text, f5_text_rect)
 
         # Draw change network button with hover effect
