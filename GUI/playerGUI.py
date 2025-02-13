@@ -20,8 +20,8 @@ class TeamBoxUI:
         self.bgImage = pygame.image.load('Photos/logo2.jpg')
         self.bgX, self.bgY, self.scaledBgImage = getAspect(self.bgImage, self.screen)
         #now set background to black and white and draw
-        grayscaleBg = self.convertToGrayscale(self.scaledBgImage)
-        self.screen.blit(grayscaleBg, (self.bgX, self.bgY))
+        self.grayscaleBg = self.convertToGrayscale(self.scaledBgImage)
+        self.screen.blit(self.grayscaleBg, (self.bgX, self.bgY))
         #make a couple colors do we need them as members of class?
         self.colorWhite = (255, 255, 255)
         self.colorBlack = (0, 0, 0)
@@ -31,7 +31,8 @@ class TeamBoxUI:
         self.fontTitle = pygame.font.SysFont("Corbel", 80, bold=False)
         self.fontButton = pygame.font.SysFont("Corbel", 35)
         self.fontText = pygame.font.SysFont("Corbel", 40)
-        self.fontUsername = pygame.font.SysFont("Courier", 25)  # Monospace font
+        self.fontID = pygame.font.SysFont("Courier", 30, True)  
+        self.fontUsername = pygame.font.SysFont("Courier", 25, True)  
 
         #create the top labels - green and red team 
         self.labels = [
@@ -77,14 +78,14 @@ class TeamBoxUI:
             yInc = 0
             for i in range(self.numBoxesPerTeam):
                 if i%2 == 0:
-                    xInc= 100
+                    xInc= 75
                     yInc = yInc + 56.65
                 else:
                     xInc = 315
                 
                 xPos =  (teamIndex*640) + xInc
                 yPos = 160 + yInc
-                rect = pygame.Rect(xPos, yPos, 185, 40)
+                rect = pygame.Rect(xPos, yPos, 210, 40)
                 teamBoxes.append(rect)
             boxes.append(teamBoxes)
         return boxes
@@ -102,7 +103,7 @@ class TeamBoxUI:
             print(f"Database error: {e}")
             return "Error"
         
-        #if id doesnt exist need to pop up box and state enter new id 
+            #if id doesnt exist need to pop up box and state enter new id 
     def handleEvent(self, event):
         if event.type == pygame.QUIT:
             return "quit"
@@ -135,6 +136,10 @@ class TeamBoxUI:
             for teamIndex in range(self.numTeams):
                 for boxIndex, box in enumerate(self.playerBoxes[teamIndex]):
                     if box.collidepoint(mousePos):
+                        # If the box already has a name, clear it
+                        if self.names[teamIndex][boxIndex]:
+                            self.ids[teamIndex][boxIndex] = ""
+                            self.names[teamIndex][boxIndex] = ""
                         self.focusedBox = (teamIndex, boxIndex)
                         return  # Stop checking once a box is focused
 
@@ -155,11 +160,18 @@ class TeamBoxUI:
                         userName = self.createNewUsername(player_id)
                     self.names[teamIndex][boxIndex] = userName
                     self.ids[teamIndex][boxIndex] = ""  # Clear the ID box
-                    self.focusedBox = None  # Remove focus after pressing enter
+
+                    # Automatically focus the next box in the same team
+                    nextBoxIndex = boxIndex + 1
+                    if nextBoxIndex < self.numBoxesPerTeam:
+                        self.focusedBox = (teamIndex, nextBoxIndex)
+                    else:
+                        self.focusedBox = None  # No more boxes in this team
             else:
-                # Allow only digits and limit to 6 characters
-                if event.unicode.isdigit() and len(self.ids[teamIndex][boxIndex]) < 6:
+                # Allow limit to 6 characters
+                if len(self.ids[teamIndex][boxIndex]) < 6:
                     self.ids[teamIndex][boxIndex] += event.unicode
+
 
     def showErrorMessage(self, message):
         errorSurface = self.fontText.render(message, True, (255, 0, 0))  # Red text
@@ -191,51 +203,70 @@ class TeamBoxUI:
 
         pygame.display.update(rect)  # Update only that region
 
-
-
-
     def createNewUsername(self, player_id):
+        # Save the current screen state (background and UI elements)
+        saved_screen = self.screen.copy()
+
+        # Define the input box for the pop-up
         inputBox = pygame.Rect(self.width // 2 - 150, self.height // 2 - 25, 300, 50)
         inputText = ""
         inputActive = True
-        saved_screen = self.screen.copy()
-
+        cursorVisible = True  # Tracks cursor visibility
+        lastCursorToggle = time.time()  # Tracks the last time the cursor was toggled
 
         while inputActive:
+            currentTime = time.time()
+
+            # Toggle cursor visibility every 500ms
+            if currentTime - lastCursorToggle > 0.5:
+                cursorVisible = not cursorVisible
+                lastCursorToggle = currentTime
+
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
                         inputActive = False  # Exit input loop when Enter is pressed
                     elif event.key == pygame.K_BACKSPACE:
-                        inputText = inputText[:-1]
+                        inputText = inputText[:-1]  # Remove the last character
                     else:
-                        if len(inputText) < 12:  # Limit username to 12 characters
-                            inputText += event.unicode
+                        if len(inputText) < 13:  # Limit username to 14 characters
+                            inputText += event.unicode  # Add the typed character
                 elif event.type == pygame.QUIT:
                     return "User"  # Default username if the user closes the window
 
-            # **Create a semi-transparent dark overlay**
+            # Draw the pop-up background (Photos/logo2.jpg)
+            self.screen.blit(self.grayscaleBg , (self.bgX, self.bgY))
+
+            # Draw a semi-transparent overlay (optional, to dim the background further)
             overlay = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
-            overlay.fill((0, 0, 0, 180))  # Black with 180 alpha for transparency
+            overlay.fill((0, 0, 0, 128))  # Black with 128 alpha for slight dimming
+            self.screen.blit(overlay, (0, 0))
 
-            self.screen.blit(self.scaledBgImage, (self.bgX, self.bgY))  # Redraw background
-            self.screen.blit(overlay, (0, 0))  # Apply transparent overlay
-
-            # **Draw the input box**
+            # Draw the input box
             pygame.draw.rect(self.screen, (255, 255, 255), inputBox, border_radius=10)  # White rounded box
             pygame.draw.rect(self.screen, (0, 0, 0), inputBox, 2, border_radius=10)  # Black outline
 
-            # **Instruction text**
-            textSurface = self.fontText.render(f"Enter new username for new ID: {player_id} (12 chars max):", True, (255, 255, 255))
+            # Render the instruction text
+            textSurface = self.fontText.render(f"Enter new username for new ID: {player_id} (13 chars max):", True, (255, 255, 255))
             textRect = textSurface.get_rect(center=(self.width // 2, self.height // 2 - 50))
             self.screen.blit(textSurface, textRect)
 
-            # **Render input text inside box**
+            # Render the input text inside the box
             inputSurface = self.fontText.render(inputText, True, (0, 0, 0))
             self.screen.blit(inputSurface, (inputBox.x + 5, inputBox.y + 7.5))
 
-            pygame.display.update()  # Refresh only the affected area
-        # Add the new username and ID to the database
+            # Draw the cursor if it's visible
+            if cursorVisible:
+                cursorX = inputBox.x + 10 + inputSurface.get_width()  # Position cursor at the end of the text
+                pygame.draw.line(self.screen, (0, 0, 0), (cursorX, inputBox.y + 5), (cursorX, inputBox.y + inputBox.height - 5))
+
+            pygame.display.update()  # Refresh the screen
+
+        # Restore the original screen state (remove the pop-up)
+        self.screen.blit(saved_screen, (0, 0))
+        pygame.display.update()
+
+        # Add the new username and ID to the database (if input is provided)
         if inputText:
             try:
                 conn = self.database.connect()
@@ -328,13 +359,13 @@ class TeamBoxUI:
 
                 # Render input text
                 text = self.ids[teamIndex][boxIndex]
-                textSurf = self.fontText.render(text, True, self.colorWhite)
-                self.screen.blit(textSurf, (box.x + 5, box.y + 10))
+                textSurf = self.fontID.render(text, True, self.colorWhite)
+                self.screen.blit(textSurf, (box.x + 5, box.y + 5))
 
                 # Render player name
                 name = self.names[teamIndex][boxIndex]
                 nameSurf = self.fontUsername.render(name, True, self.colorWhite)
-                self.screen.blit(nameSurf, (box.x + 5, box.y + 10))
+                self.screen.blit(nameSurf,(box.x + 5, box.y + 7.5))
 
         #draw cursor in the focused box
         if hasattr(self, 'focusedBox') and self.focusedBox is not None:
@@ -349,7 +380,7 @@ class TeamBoxUI:
             if self.cursorVisible:
                 # Calculate cursor position (end of the text)
                 text = self.ids[teamIndex][boxIndex]
-                textSurf = self.fontText.render(text, True, self.colorBlack)
+                textSurf = self.fontID.render(text, True, self.colorBlack)
                 cursorX = box.x + 10 + textSurf.get_width()  # Position cursor at the end of the text
                 pygame.draw.line(self.screen, self.colorBlack, (cursorX, box.y + 5), (cursorX, box.y + box.height - 5))
 
