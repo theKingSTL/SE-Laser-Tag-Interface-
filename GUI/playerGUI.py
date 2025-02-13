@@ -3,14 +3,8 @@ import sys
 import os
 import psycopg2
 import time  
-import random
-server_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Server"))
-
-# Add the Server directory to sys.path
-sys.path.append(server_dir)
-
 # Now you can import the module from the Server director
-from Server import udpClient 
+from .updClient import *
 #adding parent directory to path so the getAspect method can be used from main 
 sys.path.append(os.path.abspath('../'))
 from main import getAspect
@@ -81,7 +75,7 @@ class TeamBoxUI:
         self.nameConnect: dict[str,int] = {}
 
         #client UDP socket  
-        self.udpClient = udpClient.ClientSocket()
+        self.Client = ClientSocket()
 
     #will return a list of pygame rects 
     def createBoxes(self):
@@ -177,7 +171,7 @@ class TeamBoxUI:
                         userName = self.createNewUsername(player_id)
                     self.names[teamIndex][boxIndex] = userName
                     equipID = self.createEquipmentID()
-                    self.udpClient.sendClientMessage(str(equipID))
+                    self.Client.sendClientMessage(str(equipID))
                     self.data[self.ids[teamIndex][boxIndex]] = equipID
                     self.nameConnect[userName] = self.ids[teamIndex][boxIndex]
                     self.ids[teamIndex][boxIndex] = ""  # Clear the ID box
