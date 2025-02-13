@@ -39,10 +39,10 @@ while(True):
     # Sending a reply to client
     UDPServerSocket.sendto(bytesToSend, address)
 
-    repeat += 1
-    if (repeat == 100):
+    #repeat += 1
+    #if (repeat == 100):
         #me trying to stop the server (and it just not working <3)
-        answer = input("should i stop")
-        if (answer == "y"):
-            break
+        #answer = input("should i stop")
+        #if (answer == "y"):
+            #break
 
