@@ -169,8 +169,8 @@ class TeamBoxUI:
             # Check if change address button was clicked
             changeRect = pygame.Rect(180, self.height - 100, 250, 50)
             if changeRect.collidepoint(mousePos):
-                # Placeholder for change address functionality
-                print("Change Address functionality to be implemented later.")
+                new_ip = self.createNewIP()  # Call without player_id
+                print(f"New server IP: {new_ip}")  # Debugging output
                 return
 
             # Check if text box was clicked
@@ -343,7 +343,61 @@ class TeamBoxUI:
             return inputText
         else:
             return ""  # Default username if no input is provide
+    
+    def createNewIP(self):
+        saved_screen = self.screen.copy()
+        inputBox = pygame.Rect(self.width // 2 - 150, self.height // 2 - 25, 300, 50)
+        inputText = ""
+        inputActive = True
+        cursorVisible = True
+        lastCursorToggle = time.time()
+
+        while inputActive:
+            currentTime = time.time()
+            if currentTime - lastCursorToggle > 0.5:
+                cursorVisible = not cursorVisible
+                lastCursorToggle = currentTime
+
+            mousePos = pygame.mouse.get_pos()
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        inputActive = False
+                    elif event.key == pygame.K_BACKSPACE:
+                        inputText = inputText[:-1]
+                    else:
+                        if len(inputText) < 20:
+                            inputText += event.unicode
+                elif event.type == pygame.QUIT:
+                    return "New_IP"
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    changeRect = pygame.Rect(180, self.height - 100, 250, 50)
+                    if changeRect.collidepoint(mousePos):
+                        return self.createNewIP()
+
+            self.screen.blit(self.grayscaleBg, (self.bgX, self.bgY))
+            overlay = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 128))
+            self.screen.blit(overlay, (0, 0))
+            pygame.draw.rect(self.screen, (255, 255, 255), inputBox, border_radius=10)
+            pygame.draw.rect(self.screen, (0, 0, 0), inputBox, 2, border_radius=10)
+            textSurface = self.fontText.render("Enter new IP for server (20 chars max):", True, (255, 255, 255))
+            textRect = textSurface.get_rect(center=(self.width // 2, self.height // 2 - 50))
+            self.screen.blit(textSurface, textRect)
+            inputSurface = self.fontText.render(inputText, True, (0, 0, 0))
+            self.screen.blit(inputSurface, (inputBox.x + 5, inputBox.y + 7.5))
+
+            if cursorVisible:
+                cursorX = inputBox.x + 10 + inputSurface.get_width()
+                pygame.draw.line(self.screen, (0, 0, 0), (cursorX, inputBox.y + 5), (cursorX, inputBox.y + inputBox.height - 5))
+            pygame.display.update()
+
+        self.screen.blit(saved_screen, (0, 0))
+        pygame.display.update()
         
+        return inputText if inputText else "New_IP"
+
+
     def createEquipmentID(self):
         # Save the current screen state (background and UI elements)
         saved_screen = self.screen.copy()
