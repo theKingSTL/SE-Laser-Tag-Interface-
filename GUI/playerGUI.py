@@ -6,8 +6,34 @@ import time
 # Now you can import the module from the Server director
 from .updClient import *
 #adding parent directory to path so the getAspect method can be used from main 
-sys.path.append(os.path.abspath('../'))
-from main import getAspect
+
+def getAspect(image, screen):
+    img_width, img_height = image.get_size()
+    
+    # Screen dimensions
+    screen_width, screen_height = screen.get_size()
+
+    # Calculate the best fit while maintaining aspect ratio
+    img_ratio = img_width / img_height
+    screen_ratio = screen_width / screen_height
+
+    if img_ratio > screen_ratio:
+        # Image is wider than screen, scale based on width
+        new_width = screen_width
+        new_height = int(screen_width / img_ratio)
+    else:
+        # Image is taller than screen, scale based on height
+        new_height = screen_height
+        new_width = int(screen_height * img_ratio)
+    
+    # Scale the image while keeping aspect ratio
+    scaledImage = pygame.transform.scale(image, (new_width, new_height))
+
+    # Calculate position to center the image
+    xPos = (screen_width - new_width) // 2
+    yPos = (screen_height - new_height) // 2
+
+    return xPos, yPos, scaledImage
 
 #class for player selection UI 
 class TeamBoxUI:
@@ -169,8 +195,8 @@ class TeamBoxUI:
                     userName = self.fetchPlayerName(player_id)
                     if userName is None:
                         userName = self.createNewUsername(player_id)
-                    self.names[teamIndex][boxIndex] = userName
                     equipID = self.createEquipmentID()
+                    self.names[teamIndex][boxIndex] = userName
                     self.Client.sendClientMessage(str(equipID))
                     self.data[self.ids[teamIndex][boxIndex]] = equipID
                     self.nameConnect[userName] = self.ids[teamIndex][boxIndex]
@@ -315,6 +341,10 @@ class TeamBoxUI:
         inputActive = True
         lastCursorToggle = time.time()  # Tracks the last time the cursor was toggled
 
+        # Error message variables
+        showError = False
+        errorStartTime = 0  # Tracks when the error message was first displayed
+
         while inputActive:
             currentTime = time.time()
             cursorVisible = int(currentTime * 2) % 2 == 0  # Toggle cursor every 500ms
@@ -327,14 +357,17 @@ class TeamBoxUI:
                             inputActive = False  # Exit input loop if valid
                         else:
                             # Show error message and reset input
-                            print("Error: Please enter exactly 7 digits.")
+                            showError = True
+                            errorStartTime = currentTime  # Start the error message timer
                             inputText = ""  # Clear input for retry
                     elif event.key == pygame.K_BACKSPACE:
                         inputText = inputText[:-1]  # Remove the last character
+                        showError = False  # Hide error message when user starts typing
                     else:
                         # Allow only numeric input and limit to 7 characters
                         if event.unicode.isdigit() and len(inputText) < 7:
                             inputText += event.unicode  # Add the typed character
+                            showError = False  # Hide error message when user starts typing
                 elif event.type == pygame.QUIT:
                     return None  # Return None if the user closes the window
 
@@ -364,11 +397,13 @@ class TeamBoxUI:
                 cursorX = inputBox.x + 10 + inputSurface.get_width()  # Position cursor at the end of the text
                 pygame.draw.line(self.screen, (0, 0, 0), (cursorX, inputBox.y + 5), (cursorX, inputBox.y + inputBox.height - 5))
 
-            # Display error message if input is invalid
-            if inputText and (len(inputText) != 7 or not inputText.isdigit()):
+            # Display error message if input is invalid and within the 3-second window
+            if showError and (currentTime - errorStartTime <= 3):
                 errorSurface = self.fontText.render("Error: Please enter exactly 7 digits.", True, (255, 0, 0))
                 errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
                 self.screen.blit(errorSurface, errorRect)
+            else:
+                showError = False  # Hide error message after 3 seconds
 
             pygame.display.update()  # Refresh the screen
 
