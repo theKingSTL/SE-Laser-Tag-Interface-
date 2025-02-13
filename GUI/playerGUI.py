@@ -4,6 +4,7 @@ import os
 import psycopg2
 import time  
 import random
+
 server_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Server"))
 
 # Add the Server directory to sys.path
@@ -188,6 +189,13 @@ class TeamBoxUI:
                         self.focusedBox = (teamIndex, nextBoxIndex)
                     else:
                         self.focusedBox = None  # No more boxes in this team
+            elif event.key == pygame.K_F5:
+                # Clear all IDs and usernames
+                self.ids = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
+                self.names = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
+                self.nameConnect.clear()
+                self.data.clear()
+                self.focusedBox = None  # Remove focus from any box
             else:
                 # Allow limit to 6 characters
                 if len(self.ids[teamIndex][boxIndex]) < 6:
