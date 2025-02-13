@@ -15,17 +15,10 @@ class ClientSocket:
 
         # Create a UDP socket at client side
         UDPClientSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-
         # try to send data to the server
         try:
             # Send to server using created UDP socket
             UDPClientSocket.sendto(self.bytesToSend, self.serverAddressPort)
-
-            msgFromServer = UDPClientSocket.recvfrom(self.bufferSize)
-            reply = msgFromServer[0]
-            #msg = "Message from Server {}".format(msgFromServer[0])
-
-            print("Server replied ", reply)
         except Exception as ex:
             print("unforch your code did not work :(")
             print("some are saying it's bc ", ex)
