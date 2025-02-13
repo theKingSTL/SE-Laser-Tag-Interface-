@@ -445,14 +445,24 @@ class TeamBoxUI:
         quit_text_rect = self.quit.get_rect(center=quitRect.center)
         self.screen.blit(self.quit, quit_text_rect)
 
-        # Draw reset button with hover effect
-        resetRect = pygame.Rect(self.width / 2 - 110, self.height - 100, 175, 50)
+        # Define the reset button rectangle
+        resetRect = pygame.Rect(self.width / 2 - 110, self.height - 100, 175, 100)
+
+        # Change button color when hovered
         if resetRect.collidepoint(mouse):
             pygame.draw.rect(self.screen, 'cornsilk3', resetRect)  # Lighter color when hovered
         else:
             pygame.draw.rect(self.screen, 'cornsilk4', resetRect)
-        reset_text_rect = self.clear.get_rect(center=resetRect.center)
-        self.screen.blit(self.clear, reset_text_rect)
+
+        # Render the main text ("Reset") and center it in the top half of the button
+        reset_text = self.font.render("Reset", True, (0, 0, 0))  # Use your desired font and color
+        reset_text_rect = reset_text.get_rect(center=(resetRect.centerx, resetRect.centery - resetRect.height // 4))  # Top half
+        self.screen.blit(reset_text, reset_text_rect)
+
+        # Render the secondary text ("[F5]") and center it in the bottom half of the button
+        f5_text = self.font.render("[F5]", True, (0, 0, 0))  # Use your desired font and color
+        f5_text_rect = f5_text.get_rect(center=(resetRect.centerx, resetRect.centery + resetRect.height // 4))  # Bottom half
+        self.screen.blit(f5_text, f5_text_rect)
 
         # Draw change network button with hover effect
         changeRect = pygame.Rect(180, self.height - 100, 250, 50)
