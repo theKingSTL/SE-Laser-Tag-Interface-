@@ -3,11 +3,14 @@ import sys
 import os
 import psycopg2
 import time  
-
-
+import random
+from ..Server.updClient import *
 #adding parent directory to path so the getAspect method can be used from main 
 sys.path.append(os.path.abspath('../'))
 from main import getAspect
+
+def genEquipCode():
+    return random.randint(1000000, 9999999)
 
 #class for player selection UI 
 class TeamBoxUI:
@@ -69,6 +72,13 @@ class TeamBoxUI:
         #same idea as above for the ids and names enter empty strings 
         self.ids = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
         self.names = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
+        #will create the list for equipment id and id relation
+        self.data: dict[int, int] = {}
+        #connect id to name 
+        self.nameConnect: dict[str,int] = {}
+
+        #client UDP socket  
+        self.udpClient = ClientSocket()
 
     #will return a list of pygame rects 
     def createBoxes(self):
@@ -122,6 +132,8 @@ class TeamBoxUI:
                 # Clear all IDs and usernames
                 self.ids = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
                 self.names = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
+                self.nameConnect.clear()
+                self.data.clear()
                 self.focusedBox = None  # Remove focus from any box
                 return
 
@@ -138,6 +150,8 @@ class TeamBoxUI:
                     if box.collidepoint(mousePos):
                         # If the box already has a name, clear it
                         if self.names[teamIndex][boxIndex]:
+                            val = self.nameConnect[self.names[teamIndex][boxIndex]]
+                            del self.data[val]
                             self.ids[teamIndex][boxIndex] = ""
                             self.names[teamIndex][boxIndex] = ""
                         self.focusedBox = (teamIndex, boxIndex)
@@ -159,6 +173,10 @@ class TeamBoxUI:
                     if userName is None:
                         userName = self.createNewUsername(player_id)
                     self.names[teamIndex][boxIndex] = userName
+                    equipID = genEquipCode
+                    self.udpClient.sendClientMessage(equipID)
+                    self.data[self.ids[teamIndex][boxIndex]] = equipID
+                    self.nameConnect[userName] = self.ids[teamIndex][boxIndex]
                     self.ids[teamIndex][boxIndex] = ""  # Clear the ID box
 
                     # Automatically focus the next box in the same team
@@ -271,6 +289,15 @@ class TeamBoxUI:
             try:
                 conn = self.database.connect()
                 cursor = conn.cursor()
+
+                # check if user in use 
+                cursor.execute("SELECT 1 FROM players WHERE codename = %s", (inputText,))
+                existingUser = cursor.fetchone()
+
+                if existingUser:
+                    self.showErrorMessage("User Already exists")
+                    return ""  # Return default or handle differently
+        
                 cursor.execute("INSERT INTO players (id, codename) VALUES (%s, %s)", (player_id, inputText))
                 conn.commit()
                 conn.close()
