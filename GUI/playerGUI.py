@@ -4,13 +4,16 @@ import os
 import psycopg2
 import time  
 import random
-from ..Server.updClient import *
+server_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Server"))
+
+# Add the Server directory to sys.path
+sys.path.append(server_dir)
+
+# Now you can import the module from the Server director
+from Server import udpClient 
 #adding parent directory to path so the getAspect method can be used from main 
 sys.path.append(os.path.abspath('../'))
 from main import getAspect
-
-def genEquipCode():
-    return random.randint(1000000, 9999999)
 
 #class for player selection UI 
 class TeamBoxUI:
@@ -78,7 +81,7 @@ class TeamBoxUI:
         self.nameConnect: dict[str,int] = {}
 
         #client UDP socket  
-        self.udpClient = ClientSocket()
+        self.udpClient = udpClient.ClientSocket()
 
     #will return a list of pygame rects 
     def createBoxes(self):
@@ -173,8 +176,8 @@ class TeamBoxUI:
                     if userName is None:
                         userName = self.createNewUsername(player_id)
                     self.names[teamIndex][boxIndex] = userName
-                    equipID = genEquipCode
-                    self.udpClient.sendClientMessage(equipID)
+                    equipID = self.createEquipmentID()
+                    self.udpClient.sendClientMessage(str(equipID))
                     self.data[self.ids[teamIndex][boxIndex]] = equipID
                     self.nameConnect[userName] = self.ids[teamIndex][boxIndex]
                     self.ids[teamIndex][boxIndex] = ""  # Clear the ID box
@@ -306,8 +309,81 @@ class TeamBoxUI:
                 return "User"  # Default username if database insertion fails
             return inputText
         else:
-            return ""  # Default username if no input is provided
+            return ""  # Default username if no input is provide
+        
+    def createEquipmentID(self):
+        # Save the current screen state (background and UI elements)
+        saved_screen = self.screen.copy()
 
+        # Define the input box for the pop-up
+        inputBox = pygame.Rect(self.width // 2 - 150, self.height // 2 - 25, 300, 50)
+        inputText = ""
+        inputActive = True
+        lastCursorToggle = time.time()  # Tracks the last time the cursor was toggled
+
+        while inputActive:
+            currentTime = time.time()
+            cursorVisible = int(currentTime * 2) % 2 == 0  # Toggle cursor every 500ms
+
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        # Validate input when Enter is pressed
+                        if len(inputText) == 7 and inputText.isdigit():  # Check for exactly 7 digits
+                            inputActive = False  # Exit input loop if valid
+                        else:
+                            # Show error message and reset input
+                            print("Error: Please enter exactly 7 digits.")
+                            inputText = ""  # Clear input for retry
+                    elif event.key == pygame.K_BACKSPACE:
+                        inputText = inputText[:-1]  # Remove the last character
+                    else:
+                        # Allow only numeric input and limit to 7 characters
+                        if event.unicode.isdigit() and len(inputText) < 7:
+                            inputText += event.unicode  # Add the typed character
+                elif event.type == pygame.QUIT:
+                    return None  # Return None if the user closes the window
+
+            # Draw the pop-up background (Photos/logo2.jpg)
+            self.screen.blit(self.grayscaleBg, (self.bgX, self.bgY))
+
+            # Draw a semi-transparent overlay (optional, to dim the background further)
+            overlay = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 128))  # Black with 128 alpha for slight dimming
+            self.screen.blit(overlay, (0, 0))
+
+            # Draw the input box
+            pygame.draw.rect(self.screen, (255, 255, 255), inputBox, border_radius=10)  # White rounded box
+            pygame.draw.rect(self.screen, (0, 0, 0), inputBox, 2, border_radius=10)  # Black outline
+
+            # Render the instruction text
+            textSurface = self.fontText.render("Enter Equipment ID (7 digits):", True, (255, 255, 255))
+            textRect = textSurface.get_rect(center=(self.width // 2, self.height // 2 - 50))
+            self.screen.blit(textSurface, textRect)
+
+            # Render the input text inside the box
+            inputSurface = self.fontText.render(inputText, True, (0, 0, 0))
+            self.screen.blit(inputSurface, (inputBox.x + 5, inputBox.y + 7.5))
+
+            # Draw the cursor if it's visible
+            if cursorVisible:
+                cursorX = inputBox.x + 10 + inputSurface.get_width()  # Position cursor at the end of the text
+                pygame.draw.line(self.screen, (0, 0, 0), (cursorX, inputBox.y + 5), (cursorX, inputBox.y + inputBox.height - 5))
+
+            # Display error message if input is invalid
+            if inputText and (len(inputText) != 7 or not inputText.isdigit()):
+                errorSurface = self.fontText.render("Error: Please enter exactly 7 digits.", True, (255, 0, 0))
+                errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
+                self.screen.blit(errorSurface, errorRect)
+
+            pygame.display.update()  # Refresh the screen
+
+        # Restore the original screen state (remove the pop-up)
+        self.screen.blit(saved_screen, (0, 0))
+        pygame.display.update()
+
+        # Return the valid equipment ID
+        return inputText
         #converts the image to grey scale 
     def convertToGrayscale(self, image):
         grayscaleImage = image.copy()
