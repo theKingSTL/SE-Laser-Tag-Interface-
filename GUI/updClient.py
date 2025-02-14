@@ -24,9 +24,9 @@ class ClientSocket:
             print("unforch your code did not work :(")
             print("some are saying it's bc ", ex)
     
-    def changeNetwork(self, new_ipaddress, new_port):
+    def changeNetwork(self, new_ipaddress):
         ip = str(new_ipaddress)
-        self.serverAdressPort = (ip, new_port)
+        self.serverAdressPort[0] = ip
 
     
     

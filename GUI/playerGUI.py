@@ -3,7 +3,6 @@ import sys
 import os
 import psycopg2
 import time  
-import random
 server_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Server"))
 
 # Add the Server directory to sys.path
@@ -11,6 +10,7 @@ sys.path.append(server_dir)
 
 # Now you can import the module from the Server director
 from .updClient import *
+from .updServer import *
 #adding parent directory to path so the getAspect method can be used from main 
 
 def getAspect(image, screen):
@@ -108,7 +108,9 @@ class TeamBoxUI:
 
         #client UDP socket  
         self.Client = ClientSocket()
-
+        self.server = ServerSocket()
+        #start that thing 
+        self.server.startServer()
     #will return a list of pygame rects 
     def createBoxes(self):
         boxes = []  
@@ -170,6 +172,8 @@ class TeamBoxUI:
             changeRect = pygame.Rect(180, self.height - 100, 250, 50)
             if changeRect.collidepoint(mousePos):
                 new_ip = self.createNewIP()  # Call without player_id
+                self.server.change_network(new_ip)
+                self.Client.changeNetwork(new_ip)
                 print(f"New server IP: {new_ip}")  # Debugging output
                 return
 
