@@ -180,6 +180,7 @@ class TeamBoxUI:
                         # If the box already has a name, clear it
                         if self.names[teamIndex][boxIndex]:
                             val = self.nameConnect[self.names[teamIndex][boxIndex]]
+                            del self.nameConnect[self.names[teamIndex][boxIndex]]
                             del self.data[val]
                             self.ids[teamIndex][boxIndex] = ""
                             self.names[teamIndex][boxIndex] = ""
@@ -196,7 +197,7 @@ class TeamBoxUI:
                 player_id = self.ids[teamIndex][boxIndex]
                 if len(player_id) != 6 or not player_id.isdigit():
                     # Display error message for invalid ID format
-                    self.showErrorMessage("ID must be exactly 6 digits.")
+                    self.showErrorMessage("ID must be exactly 6 digits.", "top")
                 else:
                     userName = self.fetchPlayerName(player_id)
                     if userName is None:
@@ -211,10 +212,13 @@ class TeamBoxUI:
 
                     # Automatically focus the next box in the same team
                     nextBoxIndex = boxIndex + 1
-                    if nextBoxIndex < self.numBoxesPerTeam:
-                        self.focusedBox = (teamIndex, nextBoxIndex)
+                    while nextBoxIndex < self.numBoxesPerTeam:
+                        if not self.names[teamIndex][nextBoxIndex]:  # Check if the box is empty
+                            self.focusedBox = (teamIndex, nextBoxIndex)  # Move focus to the next empty box
+                            break
+                        nextBoxIndex += 1
                     else:
-                        self.focusedBox = None  # No more boxes in this team
+                        self.focusedBox = None  # No more empty boxes in this team
             elif event.key == pygame.K_F5:
                 # Clear all IDs and usernames
                 self.ids = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
@@ -228,9 +232,15 @@ class TeamBoxUI:
                     self.ids[teamIndex][boxIndex] += event.unicode
 
 
-    def showErrorMessage(self, message):
+    def showErrorMessage(self, message, location):
+        if location == "top":
+            x=self.width // 2.05
+            y=self.height - 610
+        else: 
+            x = self.width // 2
+            y = self.height // 2 + 50
         errorSurface = self.fontText.render(message, True, (255, 0, 0))  # Red text
-        errorRect = errorSurface.get_rect(center=(self.width // 2.05, self.height - 610))
+        errorRect = errorSurface.get_rect(center=(x,y))
         
         # Draw error message
         self.screen.blit(errorSurface, errorRect)
@@ -277,19 +287,43 @@ class TeamBoxUI:
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
-                        inputActive = False  # Exit input loop when Enter is pressed
+                        # Validate input before proceeding
+                        inputTextStripped = inputText.strip()  # Remove leading/trailing spaces
+
+                        # Check if input is empty or only spaces
+                        if len(inputTextStripped) == 0:
+                            self.showErrorMessage("Username cannot be empty or only spaces. Please retype.", "bottom")
+                            inputText = ""  # Clear the input box
+                            continue  # Skip the rest and force retype
+
+                        # Check if username already exists in the database
+                        conn = self.database.connect()
+                        cursor = conn.cursor()
+                        cursor.execute("SELECT 1 FROM players WHERE codename = %s", (inputTextStripped,))
+                        existingUser = cursor.fetchone()
+                        conn.close()
+
+                        if existingUser:
+                            self.showErrorMessage("Username already exists. Please choose a different one.", "bottom")
+                            inputText = ""  # Clear the input box
+                            continue  # Skip the rest and force retype
+
+                        # If input is valid, exit the loop
+                        inputActive = False
+
                     elif event.key == pygame.K_BACKSPACE:
                         inputText = inputText[:-1]  # Remove the last character
                     else:
-                        if len(inputText) < 13:  # Limit username to 14 characters
+                        if len(inputText) < 13:  # Limit username to 13 characters
                             inputText += event.unicode  # Add the typed character
+
                 elif event.type == pygame.QUIT:
                     self.screen.blit(saved_screen, (0, 0))
                     pygame.display.update()
                     return "", None  # Default username if the user closes the window
 
             # Draw the pop-up background (Photos/logo2.jpg)
-            self.screen.blit(self.grayscaleBg , (self.bgX, self.bgY))
+            self.screen.blit(self.grayscaleBg, (self.bgX, self.bgY))
 
             # Draw a semi-transparent overlay (optional, to dim the background further)
             overlay = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
@@ -315,35 +349,28 @@ class TeamBoxUI:
                 pygame.draw.line(self.screen, (0, 0, 0), (cursorX, inputBox.y + 5), (cursorX, inputBox.y + inputBox.height - 5))
 
             pygame.display.update()  # Refresh the screen
-        equipID = self.createEquipmentID()
+
         # Restore the original screen state (remove the pop-up)
+        equipID = self.createEquipmentID()
         self.screen.blit(saved_screen, (0, 0))
         pygame.display.update()
 
         # Add the new username and ID to the database (if input is provided)
-        if inputText:
+        inputTextStripped = inputText.strip()  # Ensure no leading/trailing spaces
+        if inputTextStripped:
             try:
                 conn = self.database.connect()
                 cursor = conn.cursor()
-
-                # check if user in use 
-                cursor.execute("SELECT 1 FROM players WHERE codename = %s", (inputText,))
-                existingUser = cursor.fetchone()
-
-                if existingUser:
-                    self.showErrorMessage("User Already exists")
-                    return "", None  # Return default or handle differently
-        
-                cursor.execute("INSERT INTO players (id, codename) VALUES (%s, %s)", (player_id, inputText))
+                cursor.execute("INSERT INTO players (id, codename) VALUES (%s, %s)", (player_id, inputTextStripped))
                 conn.commit()
                 conn.close()
             except psycopg2.Error as e:
                 print(f"Database error: {e}")
                 return "", None  # Default username if database insertion fails
-            return inputText, equipID
+            return inputTextStripped, equipID
         else:
-            return "", None  # Default username if no input is provide
-    
+            return "", None  # Default username if no input is provided
+        
     def createNewIP(self):
         saved_screen = self.screen.copy()
         inputBox = pygame.Rect(self.width // 2 - 150, self.height // 2 - 25, 300, 50)
@@ -354,6 +381,7 @@ class TeamBoxUI:
 
         # Error message variables
         showError = False
+        showError2 = False
         errorStartTime = 0  # Tracks when the error message was first displayed
 
         while inputActive:
@@ -366,8 +394,11 @@ class TeamBoxUI:
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
-                        if len(inputText) <= 20:  # Validate input length
+                        if len(inputText) <= 18 and len(inputText) >= 1:  # Validate input length
                             inputActive = False
+                        elif len(inputText) <= 1:
+                            showError2 = True
+                            errorStartTime = currentTime
                         else:
                             # Show error message if input exceeds 20 characters
                             showError = True
@@ -417,11 +448,17 @@ class TeamBoxUI:
 
             # Display error message if input exceeds 20 characters and within the 3-second window
             if showError and (currentTime - errorStartTime <= 3):
-                errorSurface = self.fontText.render("Error: IP must be 20 characters or less.", True, (255, 0, 0))
+                errorSurface = self.fontText.render("Error: IP must be 18 characters or less.", True, (255, 0, 0))
                 errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
                 self.screen.blit(errorSurface, errorRect)
             else:
                 showError = False  # Hide error message after 3 seconds
+            if showError2 and (currentTime - errorStartTime <= 3):
+                errorSurface = self.fontText.render("Error: IP must be at least 1 characters.", True, (255, 0, 0))
+                errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
+                self.screen.blit(errorSurface, errorRect)
+            else:
+                showError2 = False  # Hide error message after 3 seconds
 
             pygame.display.update()
 
