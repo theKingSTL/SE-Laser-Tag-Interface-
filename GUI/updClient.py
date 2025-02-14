@@ -5,7 +5,7 @@ class ClientSocket:
     def __init__ (self):
         self.msgFromClient = "No message!"
         self.bytesToSend = self.msgFromClient.encode()
-        self.serverAddressPort = ("127.0.0.1", 7500)
+        self.serverAddressPort = ["127.0.0.1", 7500]
         self.bufferSize = 1024
         self.UDPClientSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
         #self.networkObject = {"network":self.serverAdressPort}
@@ -26,7 +26,7 @@ class ClientSocket:
     
     def changeNetwork(self, new_ipaddress):
         ip = str(new_ipaddress)
-        self.serverAdressPort[0] = ip
+        self.serverAddressPort[0] = ip
 
     
     

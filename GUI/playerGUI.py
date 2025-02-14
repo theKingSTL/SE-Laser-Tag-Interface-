@@ -2,7 +2,9 @@ import pygame
 import sys
 import os
 import psycopg2
-import time  
+import time 
+import ipaddress
+
 server_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Server"))
 
 # Add the Server directory to sys.path
@@ -12,6 +14,13 @@ sys.path.append(server_dir)
 from .updClient import *
 from .updServer import *
 #adding parent directory to path so the getAspect method can be used from main 
+
+def isValidIp(ip):
+    try:
+        ipaddress.ip_address(ip)  # This will raise ValueError if the IP is invalid
+        return True
+    except ValueError:
+        return False 
 
 def getAspect(image, screen):
     img_width, img_height = image.get_size()
@@ -374,7 +383,7 @@ class TeamBoxUI:
             return inputTextStripped, equipID
         else:
             return "", None  # Default username if no input is provided
-        
+
     def createNewIP(self):
         saved_screen = self.screen.copy()
         inputBox = pygame.Rect(self.width // 2 - 150, self.height // 2 - 25, 300, 50)
@@ -386,6 +395,7 @@ class TeamBoxUI:
         # Error message variables
         showError = False
         showError2 = False
+        showInvalidIPError = False  # New error for invalid IP
         errorStartTime = 0  # Tracks when the error message was first displayed
 
         while inputActive:
@@ -399,28 +409,35 @@ class TeamBoxUI:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
                         if len(inputText) <= 18 and len(inputText) >= 1:  # Validate input length
-                            inputActive = False
+                            if isValidIp(inputText):  # Validate the IP address
+                                inputActive = False
+                            else:
+                                # Show error message for invalid IP
+                                showInvalidIPError = True
+                                errorStartTime = currentTime
+                                inputText = ""  # Clear the input for a new attempt
                         elif len(inputText) <= 1:
                             showError2 = True
                             errorStartTime = currentTime
                         else:
-                            # Show error message if input exceeds 20 characters
+                            # Show error message if input exceeds 18 characters
                             showError = True
                             errorStartTime = currentTime
                     elif event.key == pygame.K_BACKSPACE:
                         inputText = inputText[:-1]
                         showError = False  # Hide error message when user starts typing
+                        showInvalidIPError = False  # Hide invalid IP error as well
                     else:
-                        if len(inputText) < 18:  # Limit input to 20 characters
+                        if len(inputText) < 18:  # Limit input to 18 characters
                             inputText += event.unicode
                         else:
-                            # Show error message if input exceeds 20 characters
+                            # Show error message if input exceeds 18 characters
                             showError = True
                             errorStartTime = currentTime
                 elif event.type == pygame.QUIT:
                     self.screen.blit(saved_screen, (0, 0))
                     pygame.display.update()
-                    return "127.0.0.1"
+                    return "127.0.0.1"  # Default IP on quit
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     changeRect = pygame.Rect(180, self.height - 100, 250, 50)
                     if changeRect.collidepoint(mousePos):
@@ -450,19 +467,29 @@ class TeamBoxUI:
                 cursorX = inputBox.x + 10 + inputSurface.get_width()
                 pygame.draw.line(self.screen, (0, 0, 0), (cursorX, inputBox.y + 5), (cursorX, inputBox.y + inputBox.height - 5))
 
-            # Display error message if input exceeds 20 characters and within the 3-second window
+            # Display error message if input exceeds 18 characters and within the 3-second window
             if showError and (currentTime - errorStartTime <= 3):
                 errorSurface = self.fontText.render("Error: IP must be 18 characters or less.", True, (255, 0, 0))
                 errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
                 self.screen.blit(errorSurface, errorRect)
             else:
                 showError = False  # Hide error message after 3 seconds
+
+            # Display error message if input is too short and within the 3-second window
             if showError2 and (currentTime - errorStartTime <= 3):
-                errorSurface = self.fontText.render("Error: IP must be at least 1 characters.", True, (255, 0, 0))
+                errorSurface = self.fontText.render("Error: IP must be at least 1 character.", True, (255, 0, 0))
                 errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
                 self.screen.blit(errorSurface, errorRect)
             else:
                 showError2 = False  # Hide error message after 3 seconds
+
+            # Display error message if IP is invalid and within the 3-second window
+            if showInvalidIPError and (currentTime - errorStartTime <= 3):
+                errorSurface = self.fontText.render("Error: Invalid IP address. Please enter a valid IP.", True, (255, 0, 0))
+                errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
+                self.screen.blit(errorSurface, errorRect)
+            else:
+                showInvalidIPError = False  # Hide error message after 3 seconds
 
             pygame.display.update()
 
