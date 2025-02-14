@@ -1,48 +1,43 @@
 import socket
+import threading
 
-#phoebe comments as i try to understand upd, feel fry to ignore <3
+class ServerSocket:
+    def __init__(self):
+        self.localIP     = "127.0.0.1"
+        self.localPort   = 7501
+        self.bufferSize  = 1024
+        self.msgFromServer       = "Client message received!"
+        self.bytesToSend         = self.msgFromServer.encode()
 
-#so the instructions say that every time a player is added, i should transmit their equipment id
-#i'm making the method right now, but i feel like it defnitely has to be called within the main function
-#as a thought
+        # Create a datagram socket
+        self.UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 
-localIP     = "127.0.0.1"
-#he also wants an option to "change the network" which i'm guessing means either changing IP or port or both
-localPort   = 7501
-bufferSize  = 1024
-#so this looks like what we are sending the client (and i guess we have to encode?)
-msgFromServer       = "Hello UDP Client"
-bytesToSend         = msgFromServer.encode()
+        # Bind to address and ip
+        self.UDPServerSocket.bind((self.localIP, self.localPort))
 
-# Create a datagram socket
-UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+        print("UDP server up and listening")
 
-# Bind to address and ip
-UDPServerSocket.bind((localIP, localPort))
+    # Listen for incoming datagrams
 
-print("UDP server up and listening")
-repeat = 0
+    def runServer(self):
+        while(True):
+            bytesAddressPair = self.UDPServerSocket.recvfrom(self.bufferSize)
+            message = bytesAddressPair[0]
+            address = bytesAddressPair[1]
+            clientMsg = "Message from Client:{}".format(message)
+            clientIP  = "Client IP Address:{}".format(address)
+            
+            print(clientMsg)
+            print(clientIP)
 
-# Listen for incoming datagrams
+            if ("stop" in clientMsg):
+                break
 
-while(True):
+            # Sending a reply to client
+            #this just replies, and i believe it only sends 
+            #if a message is received. potentially fix (also i don't think client is set up to receive so nvm)
+            #self.UDPServerSocket.sendto(self.bytesToSend, address)
 
-    bytesAddressPair = UDPServerSocket.recvfrom(bufferSize)
-    message = bytesAddressPair[0]
-    address = bytesAddressPair[1]
-    clientMsg = "Message from Client:{}".format(message)
-    clientIP  = "Client IP Address:{}".format(address)
-    
-    print(clientMsg)
-    print(clientIP)
-
-    # Sending a reply to client
-    UDPServerSocket.sendto(bytesToSend, address)
-
-    #repeat += 1
-    #if (repeat == 100):
-        #me trying to stop the server (and it just not working <3)
-        #answer = input("should i stop")
-        #if (answer == "y"):
-            #break
-
+    def closeSocket(self):
+        self.UDPServerSocket.shutdown(socket.SHUT_RDWR)
+        self.UDPServerSocket.close()
