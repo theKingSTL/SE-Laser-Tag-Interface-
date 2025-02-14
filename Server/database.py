@@ -36,7 +36,7 @@ class PlayerDatabase:
             cursor = conn.cursor()
             cursor.execute("INSERT INTO players (id, codename) VALUES (%s, %s);", (player_id, codename))
             conn.commit()
-            print(f"Added player {codename} with ID {player_id}")
+            # print(f"Added player {codename} with ID {player_id}")
         except Exception as e:
             print(f"Error inserting player: {e}")
         finally:
