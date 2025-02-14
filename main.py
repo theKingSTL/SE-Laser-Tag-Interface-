@@ -15,7 +15,7 @@ pygame.display.set_caption("Photon-System")
 db = PlayerDatabase()
 #added player 
 db.add_player(123456, "Wezza")
-db.add_player(786778, "Deoblo" )
+db.add_player(786778, "Deoblo")
 #db.connect()
 
 # # Test DB connection

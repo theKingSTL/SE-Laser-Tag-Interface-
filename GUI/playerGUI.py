@@ -156,7 +156,7 @@ class TeamBoxUI:
                 return "quit"  # Quit the application
 
             # Check if clear game button was clicked
-            clearRect = pygame.Rect(self.width / 2 - 110, self.height - 100, 175, 50)
+            clearRect = pygame.Rect(self.width / 2 - 110, self.height - 100, 175, 100)
             if clearRect.collidepoint(mousePos):
                 # Clear all IDs and usernames
                 self.ids = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
@@ -236,19 +236,16 @@ class TeamBoxUI:
         self.screen.blit(errorSurface, errorRect)
         pygame.display.update()
 
-        # Start a timer to remove the error message after 3 seconds
-        pygame.time.set_timer(pygame.USEREVENT, 2000)  
-
-        # Wait for the timer event in the main loop to remove the message
+        # Wait for user input (click or key press) to remove the message
         running = True
         while running:
             for event in pygame.event.get():
-                if event.type == pygame.USEREVENT:  # Timer expired
+                if event.type == pygame.MOUSEBUTTONDOWN or event.type == pygame.KEYDOWN:  # User clicked or typed
                     running = False
-                    pygame.time.set_timer(pygame.USEREVENT, 0)  # Stop the timer
                     
                     # Redraw only the part of the screen where the error message was
                     self.redrawAffectedArea(errorRect)
+                    pygame.display.update()
 
     def redrawAffectedArea(self, rect):
         # Replace with how you normally draw your game screen
@@ -456,7 +453,7 @@ class TeamBoxUI:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
                         # Validate input when Enter is pressed
-                        if len(inputText) == 7 and inputText.isdigit():  # Check for exactly 7 digits
+                        if len(inputText) == 2 and inputText.isdigit():  # Check for exactly 7 digits
                             inputActive = False  # Exit input loop if valid
                         else:
                             # Show error message and reset input
@@ -468,7 +465,7 @@ class TeamBoxUI:
                         showError = False  # Hide error message when user starts typing
                     else:
                         # Allow only numeric input and limit to 7 characters
-                        if event.unicode.isdigit() and len(inputText) < 7:
+                        if len(inputText) < 2:
                             inputText += event.unicode  # Add the typed character
                             showError = False  # Hide error message when user starts typing
                 elif event.type == pygame.QUIT:
@@ -489,7 +486,7 @@ class TeamBoxUI:
             pygame.draw.rect(self.screen, (0, 0, 0), inputBox, 2, border_radius=10)  # Black outline
 
             # Render the instruction text
-            textSurface = self.fontText.render("Enter Equipment ID (7 digits):", True, (255, 255, 255))
+            textSurface = self.fontText.render("Enter Equipment ID (2 digits):", True, (255, 255, 255))
             textRect = textSurface.get_rect(center=(self.width // 2, self.height // 2 - 50))
             self.screen.blit(textSurface, textRect)
 
@@ -504,7 +501,7 @@ class TeamBoxUI:
 
             # Display error message if input is invalid and within the 3-second window
             if showError and (currentTime - errorStartTime <= 3):
-                errorSurface = self.fontText.render("Error: Please enter exactly 7 digits.", True, (255, 0, 0))
+                errorSurface = self.fontText.render("Error: Please enter exactly 2 digits.", True, (255, 0, 0))
                 errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
                 self.screen.blit(errorSurface, errorRect)
             else:
