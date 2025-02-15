@@ -18,7 +18,7 @@ class ClientSocket:
         # try to send data to the server
         try:
             # Send to server using created UDP socket
-            self.UDPClientSocket.sendto(self.bytesToSend, self.serverAddressPort)
+            self.UDPClientSocket.sendto(self.bytesToSend, (self.serverAddressPort[0],self.serverAddressPort[1]))
             print(f"Sent content: {content} to {self.serverAddressPort[1]}")
         except Exception as ex:
             print("unforch your code did not work :(")

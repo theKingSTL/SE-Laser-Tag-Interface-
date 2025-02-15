@@ -164,6 +164,7 @@ class TeamBoxUI:
             # Check if quit button was clicked
             quitRect = pygame.Rect(890, self.height - 100, 100, 50)
             if quitRect.collidepoint(mousePos):
+                self.server.stopServer()
                 return "quit"  # Quit the application
 
             # Check if clear game button was clicked
