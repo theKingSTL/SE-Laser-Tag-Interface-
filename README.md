@@ -12,7 +12,7 @@ LucasLMDL  - Lucas DeBose Laughton<br>
 2)Open the command prompt and type in the following commands in order(will need to enter sudo password) <br>
     a) sudo apt install python3 -y<br>
     b) sudo apt install python3-pip -y<br>
-    c) sudo apt install libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsd12-ttf-dev -y<br>
+    c) sudo apt install libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev -y<br>
     d) pip3 install pygame<br>
     e) sudo apt install libpq-dev -y<br>
     f) pip3 install psycopg2-binary<br>
