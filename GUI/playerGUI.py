@@ -128,10 +128,16 @@ class TeamBoxUI:
             yInc = 0
             for i in range(self.numBoxesPerTeam):
                 if i%2 == 0:
-                    xInc= 75
+                    if teamIndex == 0:
+                        xInc = 75
+                    else:
+                        xInc = 315
                     yInc = yInc + 56.65
                 else:
-                    xInc = 315
+                    if teamIndex == 0:
+                        xInc = 315
+                    else:
+                        xInc = 75
                 
                 xPos =  (teamIndex*640) + xInc
                 yPos = 160 + yInc
