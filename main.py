@@ -3,6 +3,8 @@ import time
 from GUI.playerGUI import *  # Ensure playerGUI.py is properly structured as a module
 from Server.database import *  # If needed for player data
 
+G_splashTime = 1
+
 # Initialize Pygame
 pygame.init()
 
@@ -83,7 +85,7 @@ def main():
     screen.blit(scaledImage, (x, y))
     pygame.display.flip()
     
-    time.sleep(3)  # Show image for 3 seconds
+    time.sleep(G_splashTime)  # Show image for 3 seconds
     
     # Run the player entry screen
     playerGUIrun(screen, db)

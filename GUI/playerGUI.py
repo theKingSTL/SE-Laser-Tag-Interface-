@@ -54,6 +54,8 @@ def getAspect(image, screen):
 #class for player selection UI 
 class TeamBoxUI:
     def __init__(self, screen, database):
+        #chnage for testing its the time to start time the wait time 
+        self.timeToSwitch = 1
         #take parameters and make screen and database 
         self.screen = screen
         self.width, self.height = screen.get_size()
@@ -188,7 +190,7 @@ class TeamBoxUI:
             # Check if start button was clicked 
             startRect = pygame.Rect(self.width / 2 - 140, self.height - 170, 240, 50)
             if startRect.collidepoint(mousePos):
-                self.startGame()
+                self.startCountDownGameStart()
                 return
             # Check if change address button was clicked
             changeRect = pygame.Rect(180, self.height - 100, 250, 50)
@@ -253,11 +255,71 @@ class TeamBoxUI:
                 self.data.clear()
                 self.focusedBox = None  # Remove focus from any box
             elif event.key == pygame.K_F5:
-                self.startGame()
+                self.startCountDownGameStart()
             else:
                 # Allow limit to 6 characters
                 if len(self.ids[teamIndex][boxIndex]) < 6:
                     self.ids[teamIndex][boxIndex] += event.unicode
+
+    def startCountDownGameStart(self):
+        # Initialize the timer value
+        countdownTime = self.timeToSwitch
+        x = self.width // 2.05
+        y = self.height - 610  # "top" location
+        
+        # Define a fixed box size for uniformity (e.g., width = 300, height = 50)
+        box_width = 600
+        box_height = 40
+        countdownRect2 = pygame.Rect(x - box_width // 2, y - box_height // 2, box_width, box_height)  # Fixed size rectangle
+        
+        running = True
+        while running and countdownTime > 0:
+            # Render the countdown message
+            message = f"Time until game start: {countdownTime}"
+            countdownSurface = self.fontText.render(message, True, (255, 0, 0))  # Red text
+            countdownRect = countdownSurface.get_rect(center=(x, y))
+
+            # Redraw the affected area before blitting the new message
+            self.redrawAffectedArea(countdownRect2)
+            
+            # Draw countdown message inside the fixed size box
+            self.screen.blit(countdownSurface, countdownRect)
+            pygame.display.update()
+
+            # Wait for either the timer to run out or a user action (click or key press)
+            start_time = time.time()  # To track the passage of time
+            while time.time() - start_time < 1:  # Update every second
+                for event in pygame.event.get():
+                    if event.type == pygame.MOUSEBUTTONDOWN or event.type == pygame.KEYDOWN:
+                        running = False  # Stop the countdown if clicked or key pressed
+                        # Redraw the affected area to clear the message
+                        self.redrawAffectedArea(countdownRect)
+                        pygame.display.update()
+                        break
+            
+            # Decrease the countdown time by 1
+            countdownTime -= 1
+
+            # If countdownTime reaches 0 and the user didn't interact, execute one more loop to show "0"
+            if countdownTime == 0 and running:
+                # Execute the loop one more time to show 0 before starting the game
+                message = f"Time until game start: {countdownTime}"
+                countdownSurface = self.fontText.render(message, True, (255, 0, 0))  # Red text
+                countdownRect = countdownSurface.get_rect(center=(x, y))
+
+                # Redraw the affected area to show "0" before starting the game
+                self.redrawAffectedArea(countdownRect)
+                self.screen.blit(countdownSurface, countdownRect)
+                pygame.display.update()
+                
+                # Wait for 1 second before starting the game
+                pygame.time.wait(1000)
+                self.redrawAffectedArea(countdownRect)
+                pygame.display.update()
+                self.startGame()  # Call the method to start the game
+                running = False 
+                break
+
 
 
     def showErrorMessage(self, message, location):
