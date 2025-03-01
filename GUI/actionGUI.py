@@ -10,7 +10,7 @@ class scoreBoard:
         self.Client = Client
         self.server = server
         self.start_time = time.time()  # Record the start time
-        self.duration = 6 * 60   # 6 minutes in seconds
+        self.duration = 6 * 60 + 30   # 6 minutes for the time to play plus the 30 for warning 
         self.scores = {"Team A": 0, "Team B": 0}  # Initialize scores for two teams
         self.font = pygame.font.Font(None, 36)  # Font for rendering text
 
@@ -30,7 +30,8 @@ class scoreBoard:
 
         # Stop the game if time is up
         if remaining_time <= 0:
-            return "time_up"
+            return "Done"
+
 
         # Render the scores
         score_text = self.font.render(f"Team A: {self.scores['Team A']}  Team B: {self.scores['Team B']}", True, (255, 255, 255))

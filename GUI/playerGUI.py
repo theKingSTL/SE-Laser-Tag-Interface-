@@ -729,6 +729,7 @@ class TeamBoxUI:
         pygame.display.update()
 
     def startGame(self):
+        self.Client.sendClientMessage(str(202))
         saved_screen = self.screen.copy()
         clock = pygame.time.Clock()
         score = scoreBoard(self.screen, self.ids, self.names, self.nameConnect, self.Client, self.server)
@@ -739,8 +740,10 @@ class TeamBoxUI:
                 if action == "quit":
                     running = False
 
-            score.draw()
-            clock.tick(30)
+            doneFlag = score.draw()
+            if doneFlag == "Done":
+                running = False 
+            clock.tick(25)
         self.screen.blit(saved_screen, (0, 0))
         pygame.display.update()
         
