@@ -13,6 +13,7 @@ sys.path.append(server_dir)
 # Now you can import the module from the Server director
 from .updClient import *
 from .updServer import *
+from .actionGUI import *
 #adding parent directory to path so the getAspect method can be used from main 
 
 def isValidIp(ip):
@@ -184,6 +185,11 @@ class TeamBoxUI:
                 self.focusedBox = None  # Remove focus from any box
                 return
 
+            # Check if start button was clicked 
+            startRect = pygame.Rect(self.width / 2 - 140, self.height - 170, 240, 50)
+            if startRect.collidepoint(mousePos):
+                self.startGame()
+                return
             # Check if change address button was clicked
             changeRect = pygame.Rect(180, self.height - 100, 250, 50)
             if changeRect.collidepoint(mousePos):
@@ -239,13 +245,15 @@ class TeamBoxUI:
                         nextBoxIndex += 1
                     else:
                         self.focusedBox = None  # No more empty boxes in this team
-            elif event.key == pygame.K_F5:
+            elif event.key == pygame.K_F12:
                 # Clear all IDs and usernames
                 self.ids = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
                 self.names = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
                 self.nameConnect.clear()
                 self.data.clear()
                 self.focusedBox = None  # Remove focus from any box
+            elif event.key == pygame.K_F5:
+                self.startGame()
             else:
                 # Allow limit to 6 characters
                 if len(self.ids[teamIndex][boxIndex]) < 6:
@@ -505,7 +513,7 @@ class TeamBoxUI:
         pygame.display.update()
 
         # Return the valid IP or a default value
-        return inputText if inputText else "New_IP"
+        return inputText if inputText else "127.0.0.1"
     def createEquipmentID(self):
         # Save the current screen state (background and UI elements)
         saved_screen = self.screen.copy()
@@ -633,11 +641,28 @@ class TeamBoxUI:
         clear_text_rect = clear_text.get_rect(center=(resetRect.centerx, resetRect.centery - resetRect.height // 4))  # Top half
         self.screen.blit(clear_text, clear_text_rect)
 
-        # Render the secondary text ("[F5]") and center it in the bottom half of the button
-        f5_text = self.fontButton.render("[F5]", True, (255, 255, 255))  # Black text
-        f5_text_rect = f5_text.get_rect(center=(resetRect.centerx, resetRect.centery + resetRect.height // 4))  # Bottom half
-        self.screen.blit(f5_text, f5_text_rect)
-        self.screen.blit(f5_text, f5_text_rect)
+        # Render the secondary text ("[F12]") and center it in the bottom half of the button
+        f12_text = self.fontButton.render("[F12]", True, (255, 255, 255))  # Black text
+        f12_text_rect = f12_text.get_rect(center=(resetRect.centerx, resetRect.centery + resetRect.height // 4))  # Bottom half
+        self.screen.blit(f12_text, f12_text_rect)
+
+        # Render "[F12]" text
+        f12_text = self.fontButton.render("[F12]", True, (255, 255, 255))  
+        f12_text_rect = f12_text.get_rect(center=(resetRect.centerx, resetRect.centery + resetRect.height // 4))
+        self.screen.blit(f12_text, f12_text_rect)
+
+        # Draw start button with hover effect
+        startRect = pygame.Rect(self.width / 2 - 140, self.height - 170, 240, 50)
+        if startRect.collidepoint(mouse):
+            pygame.draw.rect(self.screen, 'cornsilk3', startRect)  # Lighter color when hovered
+        else:
+            pygame.draw.rect(self.screen, 'cornsilk4', startRect)
+
+        # Center the text properly inside the button
+        start_text = self.fontButton.render("Start Game [F5]", True, (255, 255, 255))
+        start_text_rect = start_text.get_rect(center=(startRect.centerx, startRect.centery + startRect.height // 5.5))
+        start_text_rect.y -= 10
+        self.screen.blit(start_text, start_text_rect)
 
         # Draw change network button with hover effect
         changeRect = pygame.Rect(180, self.height - 100, 250, 50)
@@ -702,3 +727,20 @@ class TeamBoxUI:
                 pygame.draw.line(self.screen, self.colorBlack, (cursorX, box.y + 5), (cursorX, box.y + box.height - 5))
 
         pygame.display.update()
+
+    def startGame(self):
+        saved_screen = self.screen.copy()
+        clock = pygame.time.Clock()
+        score = scoreBoard(self.screen, self.ids, self.names, self.nameConnect, self.Client, self.server)
+        running = True
+        while running:
+            for event in pygame.event.get():
+                action = score.handleEvent(event)
+                if action == "quit":
+                    running = False
+
+            score.draw()
+            clock.tick(30)
+        self.screen.blit(saved_screen, (0, 0))
+        pygame.display.update()
+        
