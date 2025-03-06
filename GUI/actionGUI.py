@@ -9,27 +9,25 @@ class scoreBoard:
         self.nameConnect = nameConnect
         self.Client = Client
         self.server = server
-        self.start_time = time.time()  # Record the start time
-        self.duration = 6 * 60 + 30   # 6 minutes for the time to play plus the 30 for warning 
-        self.scores = {"Red Team": 0, "Green Team": 0}  # Initialize scores for two teams
-        self.font = pygame.font.Font(None, 36)  # Font for rendering text
+        self.start_time = time.time()  # Start time
+        self.duration = 6 * 60 + 30   # 6 minutes and 30 seconds
+        self.scores = {"Red Team": 0, "Green Team": 0}  # Team scores
+        self.font = pygame.font.Font(None, 36)  # Font for text
         self.neon_colors = {
             "pink": (255, 105, 180),
             "blue": (0, 255, 255),
             "green": (0, 255, 0),
             "red": (255, 0, 0)
         }
-        self.padding = 20
+        self.padding = 20  # Space between elements
 
     def handleEvent(self, event):
         if event.type == pygame.QUIT:
             return "quit"
-        # Handle other events (e.g., score updates) here if needed
         return None
 
     def draw(self):
-        # Clear the screen
-        self.screen.fill((0, 0, 0))  # Fill with black
+        self.screen.fill((0, 0, 0))  # Fill screen with black
 
         # Calculate elapsed time
         elapsed_time = time.time() - self.start_time
@@ -39,33 +37,28 @@ class scoreBoard:
         if remaining_time <= 0:
             return "Done"
 
-        # Get screen dimensions
         screen_width, screen_height = self.screen.get_size()
 
-        # Draw the top 1/3 for player names and scores
-        self.draw_player_section(screen_width, screen_height)
+        # Define section widths (each section takes 1/3 of the screen width)
+        section_width = screen_width // 3
 
-        # Draw the bottom 1/2 for current game actions
-        self.draw_game_actions(screen_width, screen_height)
+        # Draw Green Team on the left
+        green_team_rect = pygame.Rect(self.padding, self.padding, section_width - 2 * self.padding, screen_height - 2 * self.padding)
+        self.draw_team_section(green_team_rect, "Green Team", self.neon_colors["green"])
 
-        # Draw the remaining time in the bottom remaining part
-        self.draw_timer(screen_width, screen_height, remaining_time)
+        # Draw Scoreboard in the middle
+        scoreboard_rect = pygame.Rect(section_width + self.padding, self.padding, section_width - 2 * self.padding, screen_height * 2 // 3 - 2 * self.padding)
+        self.draw_scoreboard(scoreboard_rect)
 
-        # Update the display
-        pygame.display.flip()
+        # Draw Timer at the bottom of the middle section
+        timer_rect = pygame.Rect(section_width + self.padding, screen_height * 2 // 3 + self.padding, section_width - 2 * self.padding, screen_height // 3 - 2 * self.padding)
+        self.draw_timer(timer_rect, remaining_time)
 
-    def draw_player_section(self, screen_width, screen_height):
-        # Calculate the top section dimensions
-        top_section_height = screen_height // 3
-        section_width = screen_width // 2
-
-        # Draw Red Team
-        red_team_rect = pygame.Rect(self.padding, self.padding, section_width - 2 * self.padding, top_section_height - 2 * self.padding)
+        # Draw Red Team on the right
+        red_team_rect = pygame.Rect(2 * section_width + self.padding, self.padding, section_width - 2 * self.padding, screen_height - 2 * self.padding)
         self.draw_team_section(red_team_rect, "Red Team", self.neon_colors["red"])
 
-        # Draw Green Team
-        green_team_rect = pygame.Rect(section_width + self.padding, self.padding, section_width - 2 * self.padding, top_section_height - 2 * self.padding)
-        self.draw_team_section(green_team_rect, "Green Team", self.neon_colors["green"])
+        pygame.display.flip()  # Update display
 
     def draw_team_section(self, rect, team_name, color):
         pygame.draw.rect(self.screen, color, rect, 2)  # Draw border
@@ -80,33 +73,23 @@ class scoreBoard:
             self.screen.blit(player_text, (rect.x + 20, y_offset))
             y_offset += 30
 
-    def draw_game_actions(self, screen_width, screen_height):
-        # Calculate the bottom section dimensions
-        bottom_section_height = screen_height // 2
-        bottom_section_rect = pygame.Rect(self.padding, screen_height // 3 + self.padding, screen_width - 2 * self.padding, bottom_section_height - 2 * self.padding)
-
-        # Draw the game actions section
-        pygame.draw.rect(self.screen, self.neon_colors["blue"], bottom_section_rect, 2)
+    def draw_scoreboard(self, rect):
+        pygame.draw.rect(self.screen, self.neon_colors["blue"], rect, 2)
         action_font = pygame.font.Font(None, 36)
-        action_text = action_font.render("Current Game Actions", True, self.neon_colors["blue"])
-        self.screen.blit(action_text, (bottom_section_rect.x + 10, bottom_section_rect.y + 10))
+        action_text = action_font.render("Game Actions", True, self.neon_colors["blue"])
+        self.screen.blit(action_text, (rect.x + 10, rect.y + 10))
 
-        # Example action text
-        action_example = action_font.render("Player 1 scored a goal!", True, self.neon_colors["pink"])
-        self.screen.blit(action_example, (bottom_section_rect.x + 20, bottom_section_rect.y + 60))
+        # Example game event
+        event_example = action_font.render("Player 1 hit Player 2!", True, self.neon_colors["pink"])
+        self.screen.blit(event_example, (rect.x + 20, rect.y + 60))
 
-    def draw_timer(self, screen_width, screen_height, remaining_time):
-        # Calculate the timer section dimensions
-        timer_section_height = screen_height - (screen_height // 3 + screen_height // 2)
-        timer_section_rect = pygame.Rect(self.padding, screen_height // 3 + screen_height // 2 + self.padding, screen_width - 2 * self.padding, timer_section_height - 2 * self.padding)
-
-        # Draw the timer section
-        pygame.draw.rect(self.screen, self.neon_colors["pink"], timer_section_rect, 2)
+    def draw_timer(self, rect, remaining_time):
+        pygame.draw.rect(self.screen, self.neon_colors["pink"], rect, 2)
         timer_font = pygame.font.Font(None, 48)
         minutes = int(remaining_time // 60)
         seconds = int(remaining_time % 60)
         timer_text = timer_font.render(f"Time Left: {minutes:02}:{seconds:02}", True, self.neon_colors["pink"])
-        self.screen.blit(timer_text, (timer_section_rect.x + 20, timer_section_rect.y + 20))
+        self.screen.blit(timer_text, (rect.x + 20, rect.y + 20))
 
     def updateScore(self, team, points):
         if team in self.scores:

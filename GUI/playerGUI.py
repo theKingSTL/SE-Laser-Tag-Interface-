@@ -13,7 +13,7 @@ sys.path.append(server_dir)
 # Now you can import the module from the Server director
 from .updClient import *
 from .updServer import *
-from .actionGUI import *
+from GUI.actionGUI import *
 #adding parent directory to path so the getAspect method can be used from main 
 
 def isValidIp(ip):
