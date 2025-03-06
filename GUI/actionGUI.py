@@ -68,6 +68,7 @@ class scoreBoard:
 
         # TODO: Check to make sure scores are updating correctly
         # TODO: Check that each name has player_id and vice versa
+        # TODO: Make sure all names are drawn
         y_offset = rect.y + 60
         for player_id, names in zip(self.ids, self.names):
             # for red team
