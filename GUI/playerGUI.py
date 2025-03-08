@@ -794,7 +794,7 @@ class TeamBoxUI:
         self.Client.sendClientMessage(str(202))
         saved_screen = self.screen.copy()
         clock = pygame.time.Clock()
-        score = scoreBoard(self.screen, self.ids, self.names, self.nameConnect, self.Client, self.server)
+        score = scoreBoard(self.screen, self.ids, self.names, self.nameConnect, self.data, self.Client, self.server)
         running = True
         while running:
             for event in pygame.event.get():

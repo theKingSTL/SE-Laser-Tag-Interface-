@@ -1,25 +1,40 @@
 import pygame
 import time
 
+class Player:
+    def __init__(self, name):
+        self.name = name
+        self.score = 0  # Initialize score to zero
+
 class scoreBoard:
-    def __init__(self, screen, ids, names, nameConnect, Client, server):
+    def __init__(self, screen, ids, names, nameConnectID, idConnectEquip, Client, server):
         self.screen = screen
         self.ids = ids
-        self.names = names
-        self.nameConnect = nameConnect
+        self.names = names  # List of player names for Red Team and Green Team
+        self.nameConnect = nameConnectID
+        self.idConnectEquip = idConnectEquip
         self.Client = Client
         self.server = server
         self.start_time = time.time()  # Start time
-        self.duration = 6 * 60 + 30   # 6 minutes and 30 seconds
+        self.duration = 6 * 60  # 6 minutes
         self.scores = {"Red Team": 0, "Green Team": 0}  # Team scores
         self.font = pygame.font.Font(None, 36)  # Font for text
         self.neon_colors = {
             "pink": (255, 105, 180),
             "blue": (0, 255, 255),
             "green": (0, 255, 0),
-            "red": (255, 0, 0)
+            "red": (255, 0, 0),
+            "white": (255, 255, 255)
         }
         self.padding = 20  # Space between elements
+
+        #Filter out the empty names
+        self.redNamesFilt = list(filter(lambda item: item != "", self.names[0]))
+        self.greenNamesFilt = list(filter(lambda item: item != "", self.names[1]))
+
+        # Initialize players as objects from self.names
+        self.redPlayers = [Player(name) for name in self.redNamesFilt]  # Red Team
+        self.greenPlayers = [Player(name) for name in self.greenNamesFilt]  # Green Team
 
     def handleEvent(self, event):
         if event.type == pygame.QUIT:
@@ -42,65 +57,77 @@ class scoreBoard:
         # Define section widths (each section takes 1/3 of the screen width)
         section_width = screen_width // 3
 
-        # Draw Green Team on the right
-        green_team_rect = pygame.Rect(2 * section_width + self.padding, self.padding, section_width - 2 * self.padding, screen_height - 2 * self.padding)
-        self.draw_team_section(green_team_rect, "Green Team", self.neon_colors["green"])
+        # Draw Red Team on the left with neon transparent red
+        red_surface = pygame.Surface((section_width, screen_height), pygame.SRCALPHA)
+        red_surface.fill((255, 0, 0, 50))  # Neon transparent red
+        self.screen.blit(red_surface, (0, 0))
+        self.drawTeamSection(0, "Red Team", self.neon_colors["white"], self.redPlayers)
 
-        # Draw Scoreboard in the middle
-        scoreboard_rect = pygame.Rect(section_width + self.padding, self.padding, section_width - 2 * self.padding, screen_height * 2 // 3 - 2 * self.padding)
-        self.draw_scoreboard(scoreboard_rect)
+        # Draw Green Team on the right with neon transparent green
+        green_surface = pygame.Surface((section_width, screen_height), pygame.SRCALPHA)
+        green_surface.fill((0, 255, 0, 50))  # Neon transparent green
+        self.screen.blit(green_surface, (2 * section_width, 0))
+        self.drawTeamSection(2 * section_width, "Green Team", self.neon_colors["white"], self.greenPlayers)
 
-        # Draw Timer at the bottom of the middle section
-        timer_rect = pygame.Rect(section_width + self.padding, screen_height * 2 // 3 + self.padding, section_width - 2 * self.padding, screen_height // 3 - 2 * self.padding)
+        # Draw middle section (black)
+        middle_surface = pygame.Surface((section_width, screen_height))
+        middle_surface.fill((0, 0, 0))  # Black
+        self.screen.blit(middle_surface, (section_width, 0))
+
+        # Draw Timer at the bottom 1/6 of the middle section
+        timer_rect = pygame.Rect(section_width, screen_height * 5 // 6, section_width, screen_height // 6)
         self.draw_timer(timer_rect, remaining_time)
-
-        # Draw Red Team on the left
-        red_team_rect = pygame.Rect(self.padding, self.padding, section_width - 2 * self.padding, screen_height - 2 * self.padding)
-        self.draw_team_section(red_team_rect, "Red Team", self.neon_colors["red"])
 
         pygame.display.flip()  # Update display
 
-    def draw_team_section(self, rect, team_name, color):
-        pygame.draw.rect(self.screen, color, rect, 2)  # Draw border
-        team_font = pygame.font.Font(None, 48)
+    def drawTeamSection(self, x_offset, team_name, color, players):
+        team_font = pygame.font.Font(None, 64)  # Bigger font for team name
+
+        # Center the team name text
         team_text = team_font.render(team_name, True, color)
-        self.screen.blit(team_text, (rect.x + 10, rect.y + 10))
+        text_rect = team_text.get_rect(center=(x_offset + (self.screen.get_width() // 3) // 2, 60))  # Move team name down
 
-        # TODO: Check to make sure scores are updating correctly
-        # TODO: Check that each name has player_id and vice versa
-        # TODO: Make sure all names are drawn
-        y_offset = rect.y + 60
-        for player_id, names in zip(self.ids, self.names):
-            # for red team
-            if (color[0] == 255):
-                    player_name = self.font.render(names[0], True, color)
-                    self.screen.blit(player_name, (rect.x + 20, y_offset))
-                    y_offset += 30
-            
-            # for green team
-            if (color[0] == 0):
-                    player_name = self.font.render(names[1], True, color)
-                    self.screen.blit(player_name, (rect.x + 20, y_offset))
-                    y_offset += 30
+        # Draw the team name
+        self.screen.blit(team_text, text_rect)
 
-    def draw_scoreboard(self, rect):
-        pygame.draw.rect(self.screen, self.neon_colors["blue"], rect, 2)
-        action_font = pygame.font.Font(None, 36)
-        action_text = action_font.render("Game Actions", True, self.neon_colors["blue"])
-        self.screen.blit(action_text, (rect.x + 10, rect.y + 10))
+        # Only draw player names and scores if there are players
+        if players:
+            # Sort players by score in descending order
+            sorted_players = sorted(players, key=lambda player: player.score, reverse=True)
 
-        # Example game event
-        event_example = action_font.render("Player 1 hit Player 2!", True, self.neon_colors["pink"])
-        self.screen.blit(event_example, (rect.x + 20, rect.y + 60))
+            # Draw player names and scores
+            y_offset = 120  # More space between team name and player section
+            for player in sorted_players:
+                # Player name on the left
+                player_name = self.font.render(player.name, True, color)
+                self.screen.blit(player_name, (x_offset + 20, y_offset))
+
+                # Player score on the right
+                player_score = self.font.render(str(player.score), True, color)
+                score_x = x_offset + (self.screen.get_width() // 3) - player_score.get_width() - 20
+                self.screen.blit(player_score, (score_x, y_offset))
+
+                y_offset += 40  # More space between player names
+
+        # Draw team score at the bottom of the column (always displayed)
+        team_score_font = pygame.font.Font(None, 48)
+        team_score = self.scores[team_name]
+        team_score_text = team_score_font.render(f"Score: {team_score}", True, color)
+        team_score_rect = team_score_text.get_rect(center=(x_offset + (self.screen.get_width() // 3) // 2, self.screen.get_height() - 60))
+        self.screen.blit(team_score_text, team_score_rect)
 
     def draw_timer(self, rect, remaining_time):
-        pygame.draw.rect(self.screen, self.neon_colors["pink"], rect, 2)
-        timer_font = pygame.font.Font(None, 48)
+        timer_font = pygame.font.Font(None, 64)
         minutes = int(remaining_time // 60)
         seconds = int(remaining_time % 60)
-        timer_text = timer_font.render(f"Time Left: {minutes:02}:{seconds:02}", True, self.neon_colors["pink"])
-        self.screen.blit(timer_text, (rect.x + 20, rect.y + 20))
+        timer_text = timer_font.render(f"{minutes:02}:{seconds:02}", True, (255, 255, 255))  # White text
+        text_rect = timer_text.get_rect(center=(rect.x + rect.width // 2, rect.y + rect.height // 2))
+        self.screen.blit(timer_text, text_rect)
 
-    def updateScore(self, team, points):
-        if team in self.scores:
-            self.scores[team] += points
+    def updateScore(self, team, player_index, points):
+        if team == "Red Team":
+            self.red_players[player_index].score += points
+            self.scores["Red Team"] += points
+        elif team == "Green Team":
+            self.green_players[player_index].score += points
+            self.scores["Green Team"] += points
