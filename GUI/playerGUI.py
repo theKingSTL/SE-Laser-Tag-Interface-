@@ -55,7 +55,7 @@ def getAspect(image, screen):
 class TeamBoxUI:
     def __init__(self, screen, database):
         #chnage for testing its the time to start time the wait time 
-        self.timeToSwitch = 1
+        self.timeToSwitch = 30
         #take parameters and make screen and database 
         self.screen = screen
         self.width, self.height = screen.get_size()
@@ -72,9 +72,11 @@ class TeamBoxUI:
         self.colorActive = pygame.Color("cornsilk1")
         self.teamColors = [pygame.Color("red"), pygame.Color("green3")]
         #fonts to use 
-        self.fontTitle = pygame.font.SysFont("Corbel", 80, bold=False)
+        self.fontTitle = pygame.font.SysFont("Corbel", 80, bold=True)
         self.fontButton = pygame.font.SysFont("Corbel", 35)
-        self.fontText = pygame.font.SysFont("Corbel", 40)
+        self.instrcutionText = pygame.font.SysFont("arial", 30)
+        self.fontText = pygame.font.SysFont("Courier", 25)
+        self.errorText = pygame.font.SysFont("Courier", 25, True)
         self.fontID = pygame.font.SysFont("Courier", 30, True)  
         self.fontUsername = pygame.font.SysFont("Courier", 25, True)  
 
@@ -86,7 +88,7 @@ class TeamBoxUI:
         ]
         
         #the instruction to be set below labels 
-        self.instructions = self.fontText.render("Type Player IDs into their respective team boxes below. (IDs are 6 digits)", True, self.colorWhite)
+        self.instructions = self.instrcutionText.render("Enter Player IDs (1-6 digits) into the team boxes below. Press Enter when done.", True, self.colorWhite)
 
         #used for the box cursor 
         self.focusedBox = None  # Track the focused box
@@ -225,7 +227,7 @@ class TeamBoxUI:
                 player_id = self.ids[teamIndex][boxIndex]
                 if not (0 < len(player_id) <= 6) or not player_id.isdigit():
                     # Display error message for invalid ID format
-                    self.showErrorMessage("ID must be exactly 6 digits.", "top")
+                    self.showErrorMessage("ID must be between 1 to 6 digits.", "top")
                 else:
                     userName = self.fetchPlayerName(player_id)
                     if userName is None:
@@ -329,7 +331,7 @@ class TeamBoxUI:
         else: 
             x = self.width // 2
             y = self.height // 2 + 50
-        errorSurface = self.fontText.render(message, True, (255, 0, 0))  # Red text
+        errorSurface = self.errorText.render(message, True, (255, 0, 0))  # Red text
         errorRect = errorSurface.get_rect(center=(x,y))
         
         # Draw error message
