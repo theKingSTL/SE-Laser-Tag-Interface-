@@ -78,7 +78,8 @@ class TeamBoxUI:
         self.fontText = pygame.font.SysFont("Courier", 25)
         self.errorText = pygame.font.SysFont("Courier", 25, True)
         self.fontID = pygame.font.SysFont("Courier", 30, True)  
-        self.fontUsername = pygame.font.SysFont("Courier", 25, True)  
+        self.fontUsername = pygame.font.SysFont("Courier", 25, True) 
+        self.inputText = pygame.font.SysFont("Courier", 35, True) 
 
         #create the top labels - green and red team 
         self.labels = [
@@ -427,12 +428,12 @@ class TeamBoxUI:
             pygame.draw.rect(self.screen, (0, 0, 0), inputBox, 2, border_radius=10)  # Black outline
 
             # Render the instruction text
-            textSurface = self.fontText.render(f"Enter new username for new ID: {player_id} (13 chars max):", True, (255, 255, 255))
+            textSurface = self.instrcutionText.render(f"Enter new username for new ID: {player_id} (13 chars max):", True, (255, 255, 255))
             textRect = textSurface.get_rect(center=(self.width // 2, self.height // 2 - 50))
             self.screen.blit(textSurface, textRect)
 
             # Render the input text inside the box
-            inputSurface = self.fontText.render(inputText, True, (0, 0, 0))
+            inputSurface = self.inputText.render(inputText, True, (0, 0, 0))
             self.screen.blit(inputSurface, (inputBox.x + 5, inputBox.y + 7.5))
 
             # Draw the cursor if it's visible
@@ -633,12 +634,12 @@ class TeamBoxUI:
             pygame.draw.rect(self.screen, (0, 0, 0), inputBox, 2, border_radius=10)  # Black outline
 
             # Render the instruction text
-            textSurface = self.fontText.render("Enter Equipment ID (2 digits):", True, (255, 255, 255))
+            textSurface = self.instrcutionText.render("Enter Equipment ID (2 digits):", True, (255, 255, 255))
             textRect = textSurface.get_rect(center=(self.width // 2, self.height // 2 - 50))
             self.screen.blit(textSurface, textRect)
 
             # Render the input text inside the box
-            inputSurface = self.fontText.render(inputText, True, (0, 0, 0))
+            inputSurface = self.inputText.render(inputText, True, (0, 0, 0))
             self.screen.blit(inputSurface, (inputBox.x + 5, inputBox.y + 7.5))
 
             # Draw the cursor if it's visible
