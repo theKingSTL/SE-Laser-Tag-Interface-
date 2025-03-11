@@ -223,7 +223,7 @@ class TeamBoxUI:
                 self.ids[teamIndex][boxIndex] = self.ids[teamIndex][boxIndex][:-1]
             elif event.key == pygame.K_RETURN:
                 player_id = self.ids[teamIndex][boxIndex]
-                if len(player_id) != 6 or not player_id.isdigit():
+                if not (0 < len(player_id) <= 6) or not player_id.isdigit():
                     # Display error message for invalid ID format
                     self.showErrorMessage("ID must be exactly 6 digits.", "top")
                 else:
