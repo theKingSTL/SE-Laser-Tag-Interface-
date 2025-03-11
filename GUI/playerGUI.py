@@ -72,7 +72,7 @@ class TeamBoxUI:
         self.colorActive = pygame.Color("cornsilk1")
         self.teamColors = [pygame.Color("red"), pygame.Color("green3")]
         #fonts to use 
-        self.fontTitle = pygame.font.SysFont("Corbel", 80, bold=True)
+        self.fontTitle = pygame.font.SysFont("Corbel", 80)
         self.fontButton = pygame.font.SysFont("Corbel", 35)
         self.instrcutionText = pygame.font.SysFont("arial", 30)
         self.fontText = pygame.font.SysFont("Courier", 25)
@@ -134,16 +134,12 @@ class TeamBoxUI:
             yInc = 0
             for i in range(self.numBoxesPerTeam):
                 if i%2 == 0:
-                    if teamIndex == 0:
-                        xInc = 75
-                    else:
+                    xInc = 75
+                    if teamIndex == 1 and i == 14:
                         xInc = 315
                     yInc = yInc + 56.65
                 else:
-                    if teamIndex == 0:
-                        xInc = 315
-                    else:
-                        xInc = 75
+                    xInc = 315
                 
                 xPos =  (teamIndex*640) + xInc
                 yPos = 160 + yInc
@@ -278,8 +274,8 @@ class TeamBoxUI:
         running = True
         while running and countdownTime > 0:
             # Render the countdown message
-            message = f"Time until game start: {countdownTime}"
-            countdownSurface = self.fontText.render(message, True, (255, 0, 0))  # Red text
+            message = f"Match starts in: {countdownTime}"
+            countdownSurface = self.errorText.render(message, True, (255, 0, 0))  # Red text
             countdownRect = countdownSurface.get_rect(center=(x, y))
 
             # Redraw the affected area before blitting the new message
@@ -306,8 +302,8 @@ class TeamBoxUI:
             # If countdownTime reaches 0 and the user didn't interact, execute one more loop to show "0"
             if countdownTime == 0 and running:
                 # Execute the loop one more time to show 0 before starting the game
-                message = f"Time until game start: {countdownTime}"
-                countdownSurface = self.fontText.render(message, True, (255, 0, 0))  # Red text
+                message =  f"Match starts in: {countdownTime}"
+                countdownSurface = self.errorText.render(message, True, (255, 0, 0))  # Red text
                 countdownRect = countdownSurface.get_rect(center=(x, y))
 
                 # Redraw the affected area to show "0" before starting the game
@@ -534,12 +530,12 @@ class TeamBoxUI:
             pygame.draw.rect(self.screen, (0, 0, 0), inputBox, 2, border_radius=10)
 
             # Render the instruction text
-            textSurface = self.fontText.render("Enter new IP for server (18 chars max):", True, (255, 255, 255))
+            textSurface = self.instrcutionText.render("Enter new IP for server (18 chars max):", True, (255, 255, 255))
             textRect = textSurface.get_rect(center=(self.width // 2, self.height // 2 - 50))
             self.screen.blit(textSurface, textRect)
 
             # Render the input text inside the box
-            inputSurface = self.fontText.render(inputText, True, (0, 0, 0))
+            inputSurface = self.inputText.render(inputText, True, (0, 0, 0))
             self.screen.blit(inputSurface, (inputBox.x + 5, inputBox.y + 7.5))
 
             # Draw the cursor if it's visible
