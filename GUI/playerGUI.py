@@ -55,7 +55,7 @@ def getAspect(image, screen):
 class TeamBoxUI:
     def __init__(self, screen, database):
         #chnage for testing its the time to start time the wait time 
-        self.timeToSwitch = 30
+        self.timeToSwitch = 1
         #take parameters and make screen and database 
         self.screen = screen
         self.width, self.height = screen.get_size()
@@ -72,14 +72,11 @@ class TeamBoxUI:
         self.colorActive = pygame.Color("cornsilk1")
         self.teamColors = [pygame.Color("red"), pygame.Color("green3")]
         #fonts to use 
-        self.fontTitle = pygame.font.SysFont("Corbel", 80)
+        self.fontTitle = pygame.font.SysFont("Corbel", 80, bold=False)
         self.fontButton = pygame.font.SysFont("Corbel", 35)
-        self.instrcutionText = pygame.font.SysFont("arial", 30)
-        self.fontText = pygame.font.SysFont("Courier", 25)
-        self.errorText = pygame.font.SysFont("Courier", 25, True)
+        self.fontText = pygame.font.SysFont("Corbel", 40)
         self.fontID = pygame.font.SysFont("Courier", 30, True)  
-        self.fontUsername = pygame.font.SysFont("Courier", 25, True) 
-        self.inputText = pygame.font.SysFont("Courier", 35, True) 
+        self.fontUsername = pygame.font.SysFont("Courier", 25, True)  
 
         #create the top labels - green and red team 
         self.labels = [
@@ -89,7 +86,7 @@ class TeamBoxUI:
         ]
         
         #the instruction to be set below labels 
-        self.instructions = self.instrcutionText.render("Enter Player IDs (1-6 digits) into the team boxes below. Press Enter when done.", True, self.colorWhite)
+        self.instructions = self.fontText.render("Type Player IDs into their respective team boxes below. (IDs are 6 digits)", True, self.colorWhite)
 
         #used for the box cursor 
         self.focusedBox = None  # Track the focused box
@@ -134,12 +131,16 @@ class TeamBoxUI:
             yInc = 0
             for i in range(self.numBoxesPerTeam):
                 if i%2 == 0:
-                    xInc = 75
-                    if teamIndex == 1 and i == 14:
+                    if teamIndex == 0:
+                        xInc = 75
+                    else:
                         xInc = 315
                     yInc = yInc + 56.65
                 else:
-                    xInc = 315
+                    if teamIndex == 0:
+                        xInc = 315
+                    else:
+                        xInc = 75
                 
                 xPos =  (teamIndex*640) + xInc
                 yPos = 160 + yInc
@@ -222,9 +223,9 @@ class TeamBoxUI:
                 self.ids[teamIndex][boxIndex] = self.ids[teamIndex][boxIndex][:-1]
             elif event.key == pygame.K_RETURN:
                 player_id = self.ids[teamIndex][boxIndex]
-                if not (0 < len(player_id) <= 6) or not player_id.isdigit():
+                if len(player_id) != 6 or not player_id.isdigit():
                     # Display error message for invalid ID format
-                    self.showErrorMessage("ID must be between 1 to 6 digits.", "top")
+                    self.showErrorMessage("ID must be exactly 6 digits.", "top")
                 else:
                     userName = self.fetchPlayerName(player_id)
                     if userName is None:
@@ -274,8 +275,8 @@ class TeamBoxUI:
         running = True
         while running and countdownTime > 0:
             # Render the countdown message
-            message = f"Match starts in: {countdownTime}"
-            countdownSurface = self.errorText.render(message, True, (255, 0, 0))  # Red text
+            message = f"Time until game start: {countdownTime}"
+            countdownSurface = self.fontText.render(message, True, (255, 0, 0))  # Red text
             countdownRect = countdownSurface.get_rect(center=(x, y))
 
             # Redraw the affected area before blitting the new message
@@ -302,8 +303,8 @@ class TeamBoxUI:
             # If countdownTime reaches 0 and the user didn't interact, execute one more loop to show "0"
             if countdownTime == 0 and running:
                 # Execute the loop one more time to show 0 before starting the game
-                message =  f"Match starts in: {countdownTime}"
-                countdownSurface = self.errorText.render(message, True, (255, 0, 0))  # Red text
+                message = f"Time until game start: {countdownTime}"
+                countdownSurface = self.fontText.render(message, True, (255, 0, 0))  # Red text
                 countdownRect = countdownSurface.get_rect(center=(x, y))
 
                 # Redraw the affected area to show "0" before starting the game
@@ -328,7 +329,7 @@ class TeamBoxUI:
         else: 
             x = self.width // 2
             y = self.height // 2 + 50
-        errorSurface = self.errorText.render(message, True, (255, 0, 0))  # Red text
+        errorSurface = self.fontText.render(message, True, (255, 0, 0))  # Red text
         errorRect = errorSurface.get_rect(center=(x,y))
         
         # Draw error message
@@ -424,12 +425,12 @@ class TeamBoxUI:
             pygame.draw.rect(self.screen, (0, 0, 0), inputBox, 2, border_radius=10)  # Black outline
 
             # Render the instruction text
-            textSurface = self.instrcutionText.render(f"Enter new username for new ID: {player_id} (13 chars max):", True, (255, 255, 255))
+            textSurface = self.fontText.render(f"Enter new username for new ID: {player_id} (13 chars max):", True, (255, 255, 255))
             textRect = textSurface.get_rect(center=(self.width // 2, self.height // 2 - 50))
             self.screen.blit(textSurface, textRect)
 
             # Render the input text inside the box
-            inputSurface = self.inputText.render(inputText, True, (0, 0, 0))
+            inputSurface = self.fontText.render(inputText, True, (0, 0, 0))
             self.screen.blit(inputSurface, (inputBox.x + 5, inputBox.y + 7.5))
 
             # Draw the cursor if it's visible
@@ -530,12 +531,12 @@ class TeamBoxUI:
             pygame.draw.rect(self.screen, (0, 0, 0), inputBox, 2, border_radius=10)
 
             # Render the instruction text
-            textSurface = self.instrcutionText.render("Enter new IP for server (18 chars max):", True, (255, 255, 255))
+            textSurface = self.fontText.render("Enter new IP for server (18 chars max):", True, (255, 255, 255))
             textRect = textSurface.get_rect(center=(self.width // 2, self.height // 2 - 50))
             self.screen.blit(textSurface, textRect)
 
             # Render the input text inside the box
-            inputSurface = self.inputText.render(inputText, True, (0, 0, 0))
+            inputSurface = self.fontText.render(inputText, True, (0, 0, 0))
             self.screen.blit(inputSurface, (inputBox.x + 5, inputBox.y + 7.5))
 
             # Draw the cursor if it's visible
@@ -630,12 +631,12 @@ class TeamBoxUI:
             pygame.draw.rect(self.screen, (0, 0, 0), inputBox, 2, border_radius=10)  # Black outline
 
             # Render the instruction text
-            textSurface = self.instrcutionText.render("Enter Equipment ID (2 digits):", True, (255, 255, 255))
+            textSurface = self.fontText.render("Enter Equipment ID (2 digits):", True, (255, 255, 255))
             textRect = textSurface.get_rect(center=(self.width // 2, self.height // 2 - 50))
             self.screen.blit(textSurface, textRect)
 
             # Render the input text inside the box
-            inputSurface = self.inputText.render(inputText, True, (0, 0, 0))
+            inputSurface = self.fontText.render(inputText, True, (0, 0, 0))
             self.screen.blit(inputSurface, (inputBox.x + 5, inputBox.y + 7.5))
 
             # Draw the cursor if it's visible
@@ -793,7 +794,7 @@ class TeamBoxUI:
         self.Client.sendClientMessage(str(202))
         saved_screen = self.screen.copy()
         clock = pygame.time.Clock()
-        score = scoreBoard(self.screen, self.ids, self.names, self.nameConnect, self.data, self.Client, self.server)
+        score = scoreBoard(self.screen, self.ids, self.names, self.nameConnect, self.Client, self.server)
         running = True
         while running:
             for event in pygame.event.get():
