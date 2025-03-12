@@ -55,7 +55,7 @@ def getAspect(image, screen):
 class TeamBoxUI:
     def __init__(self, screen, database):
         #chnage for testing its the time to start time the wait time 
-        self.timeToSwitch = 30
+        self.timeToSwitch = 1
         #take parameters and make screen and database 
         self.screen = screen
         self.width, self.height = screen.get_size()
@@ -800,10 +800,7 @@ class TeamBoxUI:
                 action = score.handleEvent(event)
                 if action == "quit":
                     running = False
-
-            doneFlag = score.draw()
-            if doneFlag == "Done":
-                running = False 
+            score.draw()
             clock.tick(25)
         self.screen.blit(saved_screen, (0, 0))
         pygame.display.update()
