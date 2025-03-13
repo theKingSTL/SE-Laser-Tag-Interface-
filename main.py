@@ -3,7 +3,7 @@ import time
 from GUI.playerGUI import *  # Ensure playerGUI.py is properly structured as a module
 from Server.database import *  # If needed for player data
 
-G_splashTime = 3
+G_splashTime = 2 # had to a adjust becuase 3 isnt actully 3 more like 5 seconds
 
 # Initialize Pygame
 pygame.init()

@@ -19,7 +19,7 @@ class scoreBoard:
         self.font = pygame.font.SysFont("Corbel", 35)
         self.quit = self.font.render("Quit", True, (0, 0, 0))  # Render quit text
         self.start_time = time.time()  # Start time
-        self.duration = 20#6 * 60  # 6 minutes
+        self.duration = 6 * 60  # 6 minutes
         self.scores = {"Red Team": 0, "Green Team": 0}  # Team scores
         self.font = pygame.font.Font(None, 36)  # Font for text
         self.neon_colors = {

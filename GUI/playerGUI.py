@@ -55,7 +55,7 @@ def getAspect(image, screen):
 class TeamBoxUI:
     def __init__(self, screen, database):
         #chnage for testing its the time to start time the wait time 
-        self.timeToSwitch = 1
+        self.timeToSwitch = 30
         #take parameters and make screen and database 
         self.screen = screen
         self.width, self.height = screen.get_size()
