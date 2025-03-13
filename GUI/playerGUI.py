@@ -55,7 +55,7 @@ def getAspect(image, screen):
 class TeamBoxUI:
     def __init__(self, screen, database):
         #chnage for testing its the time to start time the wait time 
-        self.timeToSwitch = 30
+        self.timeToSwitch = 1
         #take parameters and make screen and database 
         self.screen = screen
         self.width, self.height = screen.get_size()
@@ -72,10 +72,9 @@ class TeamBoxUI:
         self.colorActive = pygame.Color("cornsilk1")
         self.teamColors = [pygame.Color("red"), pygame.Color("green3")]
         #fonts to use 
-        self.fontTitle = pygame.font.SysFont("Corbel", 80, bold=True)
+        self.fontTitle = pygame.font.SysFont("Corbel", 80)
         self.fontButton = pygame.font.SysFont("Corbel", 35)
         self.instrcutionText = pygame.font.SysFont("arial", 30)
-        self.fontText = pygame.font.SysFont("Courier", 25)
         self.errorText = pygame.font.SysFont("Courier", 25, True)
         self.fontID = pygame.font.SysFont("Courier", 30, True)  
         self.fontUsername = pygame.font.SysFont("Courier", 25, True) 
@@ -134,16 +133,12 @@ class TeamBoxUI:
             yInc = 0
             for i in range(self.numBoxesPerTeam):
                 if i%2 == 0:
-                    if teamIndex == 0:
-                        xInc = 75
-                    else:
+                    xInc = 75
+                    if teamIndex == 1 and i == 14:
                         xInc = 315
                     yInc = yInc + 56.65
                 else:
-                    if teamIndex == 0:
-                        xInc = 315
-                    else:
-                        xInc = 75
+                    xInc = 315
                 
                 xPos =  (teamIndex*640) + xInc
                 yPos = 160 + yInc
@@ -278,8 +273,8 @@ class TeamBoxUI:
         running = True
         while running and countdownTime > 0:
             # Render the countdown message
-            message = f"Time until game start: {countdownTime}"
-            countdownSurface = self.fontText.render(message, True, (255, 0, 0))  # Red text
+            message = f"Match starts in: {countdownTime}"
+            countdownSurface = self.errorText.render(message, True, (255, 0, 0))  # Red text
             countdownRect = countdownSurface.get_rect(center=(x, y))
 
             # Redraw the affected area before blitting the new message
@@ -306,8 +301,8 @@ class TeamBoxUI:
             # If countdownTime reaches 0 and the user didn't interact, execute one more loop to show "0"
             if countdownTime == 0 and running:
                 # Execute the loop one more time to show 0 before starting the game
-                message = f"Time until game start: {countdownTime}"
-                countdownSurface = self.fontText.render(message, True, (255, 0, 0))  # Red text
+                message =  f"Match starts in: {countdownTime}"
+                countdownSurface = self.errorText.render(message, True, (255, 0, 0))  # Red text
                 countdownRect = countdownSurface.get_rect(center=(x, y))
 
                 # Redraw the affected area to show "0" before starting the game
@@ -534,12 +529,12 @@ class TeamBoxUI:
             pygame.draw.rect(self.screen, (0, 0, 0), inputBox, 2, border_radius=10)
 
             # Render the instruction text
-            textSurface = self.fontText.render("Enter new IP for server (18 chars max):", True, (255, 255, 255))
+            textSurface = self.instrcutionText.render("Enter new IP for server (18 chars max):", True, (255, 255, 255))
             textRect = textSurface.get_rect(center=(self.width // 2, self.height // 2 - 50))
             self.screen.blit(textSurface, textRect)
 
             # Render the input text inside the box
-            inputSurface = self.fontText.render(inputText, True, (0, 0, 0))
+            inputSurface = self.inputText.render(inputText, True, (0, 0, 0))
             self.screen.blit(inputSurface, (inputBox.x + 5, inputBox.y + 7.5))
 
             # Draw the cursor if it's visible
@@ -549,7 +544,7 @@ class TeamBoxUI:
 
             # Display error message if input exceeds 18 characters and within the 3-second window
             if showError and (currentTime - errorStartTime <= 3):
-                errorSurface = self.fontText.render("Error: IP must be 18 characters or less.", True, (255, 0, 0))
+                errorSurface = self.errorText.render("Error: IP must be 18 characters or less.", True, (255, 0, 0))
                 errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
                 self.screen.blit(errorSurface, errorRect)
             else:
@@ -557,7 +552,7 @@ class TeamBoxUI:
 
             # Display error message if input is too short and within the 3-second window
             if showError2 and (currentTime - errorStartTime <= 3):
-                errorSurface = self.fontText.render("Error: IP must be at least 1 character.", True, (255, 0, 0))
+                errorSurface = self.errorText.render("Error: IP must be at least 1 character.", True, (255, 0, 0))
                 errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
                 self.screen.blit(errorSurface, errorRect)
             else:
@@ -565,7 +560,7 @@ class TeamBoxUI:
 
             # Display error message if IP is invalid and within the 3-second window
             if showInvalidIPError and (currentTime - errorStartTime <= 3):
-                errorSurface = self.fontText.render("Error: Invalid IP address. Please enter a valid IP.", True, (255, 0, 0))
+                errorSurface = self.errorText.render("Error: Invalid IP address. Please enter a valid IP.", True, (255, 0, 0))
                 errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
                 self.screen.blit(errorSurface, errorRect)
             else:
@@ -591,6 +586,7 @@ class TeamBoxUI:
 
         # Error message variables
         showError = False
+        sameEquipError = False
         errorStartTime = 0  # Tracks when the error message was first displayed
 
         while inputActive:
@@ -602,7 +598,15 @@ class TeamBoxUI:
                     if event.key == pygame.K_RETURN:
                         # Validate input when Enter is pressed
                         if len(inputText) == 2 and inputText.isdigit():  # Check for exactly 7 digits
-                            inputActive = False  # Exit input loop if valid
+                            for equipID in self.data.values():
+                                if equipID == inputText:
+                                    sameEquipError = True
+                                    showError = True
+                                    errorStartTime = currentTime  # Start the error message timer
+                                    inputText = ""  # Clear input for retry
+                                    break
+                            if not sameEquipError:  # Only exit the input loop if no duplicate was found
+                                inputActive = False
                         else:
                             # Show error message and reset input
                             showError = True
@@ -649,11 +653,17 @@ class TeamBoxUI:
 
             # Display error message if input is invalid and within the 3-second window
             if showError and (currentTime - errorStartTime <= 3):
-                errorSurface = self.fontText.render("Error: Please enter exactly 2 digits.", True, (255, 0, 0))
-                errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
-                self.screen.blit(errorSurface, errorRect)
+                if sameEquipError == True:
+                    errorSurface = self.errorText.render("Error: Equipment ID already Exists.", True, (255, 0, 0))
+                    errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
+                    self.screen.blit(errorSurface, errorRect)
+                else:
+                    errorSurface = self.errorText.render("Error: Please enter exactly 2 digits.", True, (255, 0, 0))
+                    errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
+                    self.screen.blit(errorSurface, errorRect)
             else:
                 showError = False  # Hide error message after 3 seconds
+                sameEquipError = False
 
             pygame.display.update()  # Refresh the screen
 
@@ -804,10 +814,7 @@ class TeamBoxUI:
                 action = score.handleEvent(event)
                 if action == "quit":
                     running = False
-
-            doneFlag = score.draw()
-            if doneFlag == "Done":
-                running = False 
+            score.draw()
             clock.tick(25)
         self.screen.blit(saved_screen, (0, 0))
         pygame.display.update()
