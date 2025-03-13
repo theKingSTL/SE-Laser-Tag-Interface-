@@ -75,7 +75,6 @@ class TeamBoxUI:
         self.fontTitle = pygame.font.SysFont("Corbel", 80)
         self.fontButton = pygame.font.SysFont("Corbel", 35)
         self.instrcutionText = pygame.font.SysFont("arial", 30)
-        self.fontText = pygame.font.SysFont("Courier", 25)
         self.errorText = pygame.font.SysFont("Courier", 25, True)
         self.fontID = pygame.font.SysFont("Courier", 30, True)  
         self.fontUsername = pygame.font.SysFont("Courier", 25, True) 
@@ -545,7 +544,7 @@ class TeamBoxUI:
 
             # Display error message if input exceeds 18 characters and within the 3-second window
             if showError and (currentTime - errorStartTime <= 3):
-                errorSurface = self.fontText.render("Error: IP must be 18 characters or less.", True, (255, 0, 0))
+                errorSurface = self.errorText.render("Error: IP must be 18 characters or less.", True, (255, 0, 0))
                 errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
                 self.screen.blit(errorSurface, errorRect)
             else:
@@ -553,7 +552,7 @@ class TeamBoxUI:
 
             # Display error message if input is too short and within the 3-second window
             if showError2 and (currentTime - errorStartTime <= 3):
-                errorSurface = self.fontText.render("Error: IP must be at least 1 character.", True, (255, 0, 0))
+                errorSurface = self.errorText.render("Error: IP must be at least 1 character.", True, (255, 0, 0))
                 errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
                 self.screen.blit(errorSurface, errorRect)
             else:
@@ -561,7 +560,7 @@ class TeamBoxUI:
 
             # Display error message if IP is invalid and within the 3-second window
             if showInvalidIPError and (currentTime - errorStartTime <= 3):
-                errorSurface = self.fontText.render("Error: Invalid IP address. Please enter a valid IP.", True, (255, 0, 0))
+                errorSurface = self.errorText.render("Error: Invalid IP address. Please enter a valid IP.", True, (255, 0, 0))
                 errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
                 self.screen.blit(errorSurface, errorRect)
             else:
@@ -587,6 +586,7 @@ class TeamBoxUI:
 
         # Error message variables
         showError = False
+        sameEquipError = False
         errorStartTime = 0  # Tracks when the error message was first displayed
 
         while inputActive:
@@ -598,7 +598,15 @@ class TeamBoxUI:
                     if event.key == pygame.K_RETURN:
                         # Validate input when Enter is pressed
                         if len(inputText) == 2 and inputText.isdigit():  # Check for exactly 7 digits
-                            inputActive = False  # Exit input loop if valid
+                            for equipID in self.data.values():
+                                if equipID == inputText:
+                                    sameEquipError = True
+                                    showError = True
+                                    errorStartTime = currentTime  # Start the error message timer
+                                    inputText = ""  # Clear input for retry
+                                    break
+                            if not sameEquipError:  # Only exit the input loop if no duplicate was found
+                                inputActive = False
                         else:
                             # Show error message and reset input
                             showError = True
@@ -645,11 +653,17 @@ class TeamBoxUI:
 
             # Display error message if input is invalid and within the 3-second window
             if showError and (currentTime - errorStartTime <= 3):
-                errorSurface = self.fontText.render("Error: Please enter exactly 2 digits.", True, (255, 0, 0))
-                errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
-                self.screen.blit(errorSurface, errorRect)
+                if sameEquipError == True:
+                    errorSurface = self.errorText.render("Error: Equipment ID already Exists.", True, (255, 0, 0))
+                    errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
+                    self.screen.blit(errorSurface, errorRect)
+                else:
+                    errorSurface = self.errorText.render("Error: Please enter exactly 2 digits.", True, (255, 0, 0))
+                    errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
+                    self.screen.blit(errorSurface, errorRect)
             else:
                 showError = False  # Hide error message after 3 seconds
+                sameEquipError = False
 
             pygame.display.update()  # Refresh the screen
 

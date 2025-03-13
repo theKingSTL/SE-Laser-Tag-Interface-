@@ -96,7 +96,7 @@ class scoreBoard:
         if remaining_time <= 0:
             # Adjust button dimensions to fit the text
             button_width = section_width * 0.5  # Wider button to fit longer text
-            button_height = screen_height // 12  # Reduced height for the button
+            button_height = screen_height // 15  # Reduced height for the button
             quit_rect = pygame.Rect(
                 section_width * 1.25,  # Center the button horizontally
                 screen_height * 7 // 8,  # Vertical position
