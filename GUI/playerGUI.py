@@ -229,7 +229,7 @@ class TeamBoxUI:
                     # Display error message for invalid ID format
                     self.showErrorMessage("ID must be between 1 to 6 digits.", "top")
                 elif self.check_duplicate(player_id) == True:
-                    self.showErrorMessage("ID already exists", "top")
+                    self.showErrorMessage("ID already in use.", "top")
                 else:
                     userName = self.fetchPlayerName(player_id)
                     if userName is None:
