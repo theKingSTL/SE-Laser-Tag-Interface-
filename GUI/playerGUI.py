@@ -115,7 +115,7 @@ class TeamBoxUI:
         #same idea as above for the ids and names enter empty strings 
         self.ids = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
         self.names = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
-        #will create the list for equipment id and id relation
+        #will create the list for equipment id and id relation in that order
         self.data: dict[int, int] = {}
         #connect id to name 
         self.nameConnect: dict[str,int] = {}
@@ -159,7 +159,11 @@ class TeamBoxUI:
         except psycopg2.Error as e:
             print(f"Database error: {e}")
             return "Error"
-        
+    
+    #will check if player id already exists 
+    def check_duplicate(self, player_id):
+        return player_id in self.nameConnect.values()
+
             #if id doesnt exist need to pop up box and state enter new id 
     def handleEvent(self, event):
         if event.type == pygame.QUIT:
@@ -224,6 +228,8 @@ class TeamBoxUI:
                 if not (0 < len(player_id) <= 6) or not player_id.isdigit():
                     # Display error message for invalid ID format
                     self.showErrorMessage("ID must be between 1 to 6 digits.", "top")
+                elif self.check_duplicate(player_id) == True:
+                    self.showErrorMessage("ID already exists", "top")
                 else:
                     userName = self.fetchPlayerName(player_id)
                     if userName is None:
