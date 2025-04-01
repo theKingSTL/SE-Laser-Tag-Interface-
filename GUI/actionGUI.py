@@ -20,6 +20,8 @@ class Player:
     def __init__(self, name):
         self.name = name
         self.score = 0  # Initialize score to zero
+        self.equipId = -1
+        self.hitBase = False 
 
 class scoreBoard:
     def __init__(self, screen, ids, names, nameConnectID, idConnectEquip, client, server):
@@ -55,6 +57,8 @@ class scoreBoard:
         # Initialize players as objects from self.names
         self.redPlayers = [Player(name) for name in self.redNamesFilt]  # Red Team
         self.greenPlayers = [Player(name) for name in self.greenNamesFilt]  # Green Team
+        #will asign all the equip IDS to the players 
+        self.assignIDS()
 
     def handleEvent(self, event):
         screenW, screenH = self.screen.get_size()
@@ -81,7 +85,7 @@ class scoreBoard:
         #gets the messages from the server and fixes scores 
         messageList = self.server.returnMessages()
         if messageList != None:
-            self.fixScore(messageList)
+            self.fixMessagesScore(messageList)
 
         self.screen.fill((0, 0, 0))  # Fill screen with black
         mouse = pygame.mouse.get_pos()
@@ -128,6 +132,9 @@ class scoreBoard:
         # If time is up, draw the Quit button over the timer
         if remaining_time <= 0:
             # Adjust button dimensions to fit the text
+            self.client.sendClientMessage(str(221))
+            self.client.sendClientMessage(str(221))
+            self.client.sendClientMessage(str(221))
             button_width = section_width * 0.5  # Wider button to fit longer text
             button_height = screen_height // 15  # Reduced height for the button
             quit_rect = pygame.Rect(
@@ -205,5 +212,25 @@ class scoreBoard:
             self.greenPlayers[playerIndex].score += points
             self.scores["Green Team"] += points
     
-    def fixScore(self):
+    def fixMessagesScore(self):
         print(1)
+        #loop the array split into two values seperated by :
+        #Find player with equipment ID first 
+        # is the second string a 53 or 43 if so check which team player one is on add a [B] to Name and check if been base before 
+        #Find playe with second hit 
+        #Are they on same team 
+            #if yes -10 transmit first 
+            #if no +10 tramsit second 
+        #print message to screen 
+        
+    
+    def assignIDS(self):
+        print(2)
+        # for each player id = namesConnect[player name]
+        # equipID = data[id]
+        # then set thats players equip id to this value do for each 
+
+
+# TO DO 
+# make winning team flash 
+# Add music 
