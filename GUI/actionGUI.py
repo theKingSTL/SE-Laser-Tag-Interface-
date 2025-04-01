@@ -15,6 +15,7 @@ class scoreBoard:
         self.idConnectEquip = idConnectEquip
         self.Client = Client
         self.server = server
+        self.readList = []
         self.doneFlag = False
         self.font = pygame.font.SysFont("Corbel", 35)
         self.quit = self.font.render("Quit", True, (0, 0, 0))  # Render quit text
@@ -22,6 +23,7 @@ class scoreBoard:
         self.duration = 6 * 60  # 6 minutes
         self.scores = {"Red Team": 0, "Green Team": 0}  # Team scores
         self.font = pygame.font.Font(None, 36)  # Font for text
+        self.fontText = pygame.font.SysFont(None, 32)
         self.neon_colors = {
             "pink": (255, 105, 180),
             "blue": (0, 255, 255),
@@ -59,6 +61,7 @@ class scoreBoard:
                 return "quit"
 
     def draw(self):
+        #Test code for list appending(DELETE ME WHEN COMPLETE W/ SENDING SERVER LIST): self.readList.append('A 12LetterChar hit a 12LetterChar')
         self.screen.fill((0, 0, 0))  # Fill screen with black
         mouse = pygame.mouse.get_pos()
 
@@ -87,6 +90,15 @@ class scoreBoard:
         middle_surface = pygame.Surface((section_width, screen_height))
         middle_surface.fill((0, 0, 0))  # Black
         self.screen.blit(middle_surface, (section_width, 0))
+
+        # Draw text
+        for i in range(len(self.readList)):
+            y_location = screen_height * 5 // 6-i*32-25
+            if((y_location) == 0):
+                print("Off screen")
+                break
+            img = self.fontText.render(self.readList[i], True, 'WHITE')
+            self.screen.blit(img, (section_width+30, y_location))
 
         # Draw Timer at the bottom 1/6 of the middle section
         timer_rect = pygame.Rect(section_width, screen_height * 5 // 6, section_width, screen_height // 6)
