@@ -1,5 +1,20 @@
 import pygame
 import time
+import pygame
+import sys
+import os
+
+server_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Server"))
+
+# Add the Server directory to sys.path
+sys.path.append(server_dir)
+
+# Now you can import the module from the Server director
+from .updClient import *
+from .updServer import *
+from .actionGUI import *
+#adding parent directory to path so the getAspect method can be used from main 
+
 
 class Player:
     def __init__(self, name):
@@ -7,13 +22,13 @@ class Player:
         self.score = 0  # Initialize score to zero
 
 class scoreBoard:
-    def __init__(self, screen, ids, names, nameConnectID, idConnectEquip, Client, server):
+    def __init__(self, screen, ids, names, nameConnectID, idConnectEquip, client, server):
         self.screen = screen
         self.ids = ids
         self.names = names  # List of player names for Red Team and Green Team
         self.nameConnect = nameConnectID
         self.idConnectEquip = idConnectEquip
-        self.Client = Client
+        self.client = client
         self.server = server
         self.readList = []
         self.doneFlag = False
@@ -61,7 +76,15 @@ class scoreBoard:
                 return "quit"
 
     def draw(self):
+<<<<<<< Updated upstream
         #Test code for list appending(DELETE ME WHEN COMPLETE W/ SENDING SERVER LIST): self.readList.append('A 12LetterChar hit a 12LetterChar')
+=======
+        #gets the messages from the server and fixes scores 
+        messageList = self.server.returnMessages()
+        if messageList != None:
+            self.fixScore(messageList)
+
+>>>>>>> Stashed changes
         self.screen.fill((0, 0, 0))  # Fill screen with black
         mouse = pygame.mouse.get_pos()
 
@@ -176,10 +199,13 @@ class scoreBoard:
         text_rect = timer_text.get_rect(center=(rect.x + rect.width // 2, rect.y + rect.height // 2))
         self.screen.blit(timer_text, text_rect)
 
-    def updateScore(self, team, player_index, points):
+    def updateScore(self, team, playerIndex, points):
         if team == "Red Team":
-            self.red_players[player_index].score += points
+            self.redPlayers[playerIndex].score += points
             self.scores["Red Team"] += points
         elif team == "Green Team":
-            self.green_players[player_index].score += points
+            self.greenPlayers[playerIndex].score += points
             self.scores["Green Team"] += points
+    
+    def fixScore(self):
+        print(1)
