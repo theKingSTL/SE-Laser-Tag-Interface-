@@ -115,13 +115,13 @@ class TeamBoxUI:
         #same idea as above for the ids and names enter empty strings 
         self.ids = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
         self.names = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
-        #will create the list for equipment id and id relation in that order
+        #will create the list for ids being key and vlaue being equipment ID
         self.data: dict[int, int] = {}
-        #connect id to name 
+        #connect name to id, name is the key id is the value 
         self.nameConnect: dict[str,int] = {}
 
         #client UDP socket  
-        self.Client = ClientSocket()
+        self.client = ClientSocket()
         self.server = ServerSocket()
         #start that thing 
         self.server.startServer()
@@ -199,7 +199,7 @@ class TeamBoxUI:
             if changeRect.collidepoint(mousePos):
                 new_ip = self.createNewIP()  # Call without player_id
                 self.server.change_network(new_ip)
-                self.Client.changeNetwork(new_ip)
+                self.client.changeNetwork(new_ip)
                 print(f"New server IP: {new_ip}")  # Debugging output
                 return
 
@@ -236,8 +236,8 @@ class TeamBoxUI:
                         userName, equipID = self.createNewUsername(player_id)
                     else:
                         equipID = self.createEquipmentID()
+                    self.client.sendClientMessage(str(equipID))
                     self.names[teamIndex][boxIndex] = userName
-                    self.Client.sendClientMessage(str(equipID))
                     self.data[self.ids[teamIndex][boxIndex]] = equipID
                     self.nameConnect[userName] = self.ids[teamIndex][boxIndex]
                     self.ids[teamIndex][boxIndex] = ""  # Clear the ID box
@@ -810,10 +810,10 @@ class TeamBoxUI:
         pygame.display.update()
 
     def startGame(self):
-        self.Client.sendClientMessage(str(202))
+        self.client.sendClientMessage(str(202))
         saved_screen = self.screen.copy()
         clock = pygame.time.Clock()
-        score = scoreBoard(self.screen, self.ids, self.names, self.nameConnect, self.data, self.Client, self.server)
+        score = scoreBoard(self.screen, self.ids, self.names, self.nameConnect, self.data, self.client, self.server)
         running = True
         while running:
             for event in pygame.event.get():
