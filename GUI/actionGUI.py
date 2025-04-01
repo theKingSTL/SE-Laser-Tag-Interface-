@@ -76,21 +76,13 @@ class scoreBoard:
                 return "quit"
 
     def draw(self):
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
         #Test code for list appending(DELETE ME WHEN COMPLETE W/ SENDING SERVER LIST): self.readList.append('A 12LetterChar hit a 12LetterChar')
-=======
-=======
->>>>>>> Stashed changes
+
         #gets the messages from the server and fixes scores 
         messageList = self.server.returnMessages()
         if messageList != None:
             self.fixScore(messageList)
 
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
         self.screen.fill((0, 0, 0))  # Fill screen with black
         mouse = pygame.mouse.get_pos()
 
