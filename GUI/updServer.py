@@ -1,4 +1,3 @@
-
 import socket
 from threading import Thread, Event
 
@@ -8,7 +7,7 @@ class ServerSocket:
         self.localPort   = 7501
         self.bufferSize  = 1024
         self.msgFromServer = "Client message received!"
-        self.bytesToSend   = self.msgFromServer.encode()
+        self.messageQueue = []  # Store received messages
 
         # This event lets the thread know when it should stop
         self.stop_event = Event()
@@ -34,19 +33,14 @@ class ServerSocket:
     def runServer(self):
         while not self.stop_event.is_set():
             try:
-                bytesAddressPair = self.UDPServerSocket.recvfrom(self.bufferSize)
+                message, address = self.UDPServerSocket.recvfrom(self.bufferSize)
+                decMessage = message.decode('utf-8')  # Convert bytes to string
+                print(f"Received from {address}: {decMessage}")
+                # Add received message to queue for processing in main thread
+                self.messageQueue.append(decMessage)
             except OSError:
                 # If socket is closed while blocking in recvfrom, it often raises OSError
                 break
-
-            message = bytesAddressPair[0]
-            address = bytesAddressPair[1]
-            clientMsg = f"Message from Client: {message}"
-            clientIP  = f"Client IP Address: {address}"
-            
-            print(clientMsg)
-            print(clientIP)
-
             # If you want to stop on a particular message, you could do:
             # if b"stop" in message:
             #     break
@@ -76,3 +70,8 @@ class ServerSocket:
         self.localIP = ipaddress
         print(f"Network changed to {self.localIP}")
         self.startServer()
+
+    def returnMessages(self):
+        messages = self.messageQueue[:]  # Create a copy of the list
+        self.messageQueue.clear()  # Clear the list
+        return messages if messages else None

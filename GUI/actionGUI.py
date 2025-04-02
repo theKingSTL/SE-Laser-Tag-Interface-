@@ -1,20 +1,33 @@
-
 import pygame
 import time
+import pygame
+import sys
+import os
+import random
+
+random.seed(time.time())
+
+server_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Server"))
+# Add the music directory to sys.path
+music_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "photon_tracks"))
+
+# Add the Server directory to sys.path
+sys.path.append(server_dir)
+
+# Now you can import the module from the Server director
+from .updClient import *
+from .updServer import *
+from .actionGUI import *
+#adding parent directory to path so the getAspect method can be used from main 
+
 
 class Player:
-    def __init__(self, name):
+    def __init__(self, name, team):
         self.name = name
         self.score = 0  # Initialize score to zero
-
-class Message:
-    def __init__(self,type,team1,team2, name1, name2):
-        self.type = type # True or false for base hit or hit 
-        self.team1 = team1
-        self.team2 = team2
-        self.name1 = name1
-        self.name2 = name2
-
+        self.equipId = -1
+        self.hitBase = False 
+        self.team = team #"red" or "green"
 
 class Message:
     def __init__(self,type,team1,team2, name1, name2):
@@ -26,18 +39,23 @@ class Message:
 
 
 class scoreBoard:
-    def __init__(self, screen, ids, names, nameConnectID, idConnectEquip, Client, server):
+    def __init__(self, screen, ids, names, nameConnectID, idConnectEquip, client, server):
         self.screen = screen
         self.ids = ids
         self.names = names  # List of player names for Red Team and Green Team
         self.nameConnect = nameConnectID
         self.idConnectEquip = idConnectEquip
-        self.Client = Client
+        self.client = client
         self.server = server
+        self.readList = []
+        self.doneFlag = False
+        self.font = pygame.font.SysFont("Corbel", 35)
+        self.quit = self.font.render("Quit", True, (0, 0, 0))  # Render quit text
         self.start_time = time.time()  # Start time
         self.duration = 6 * 60  # 6 minutes
         self.scores = {"Red Team": 0, "Green Team": 0}  # Team scores
         self.font = pygame.font.Font(None, 36)  # Font for text
+        self.fontText = pygame.font.SysFont(None, 32)
         self.neon_colors = {
             "pink": (255, 105, 180),
             "blue": (0, 255, 255),
@@ -52,24 +70,59 @@ class scoreBoard:
         self.greenNamesFilt = list(filter(lambda item: item != "", self.names[1]))
 
         # Initialize players as objects from self.names
-        self.redPlayers = [Player(name) for name in self.redNamesFilt]  # Red Team
-        self.greenPlayers = [Player(name) for name in self.greenNamesFilt]  # Green Team
+        self.redPlayers = [Player(name, "red") for name in self.redNamesFilt]  # Red Team
+        self.greenPlayers = [Player(name, "green") for name in self.greenNamesFilt]  # Green Team
+        #will asign all the equip IDS to the players 
+        self.assignIDS()
+
+        #we will start the music 
+        pygame.mixer.init()
+        # Get a list of all MP3 files in the directory
+        tracks = [f for f in os.listdir(music_dir) if f.endswith(".mp3")]
+        track = random.choice(tracks)
+        track_path = os.path.join(music_dir, track)
+
+        # Load and play the track
+        pygame.mixer.music.load(track_path)
+        pygame.mixer.music.play()
+
+
 
     def handleEvent(self, event):
+        screenW, screenH = self.screen.get_size()
+
+        # Define section widths (each section takes 1/3 of the screen width)
+        sectionW = screenW // 3
+
         if event.type == pygame.QUIT:
+            pygame.mixer.music.stop()
             return "quit"
-        return None
+
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            mousePos = pygame.mouse.get_pos()
+            quitRect = pygame.Rect(sectionW, screenH * 5 // 6, sectionW, screenH // 6)
+
+            # Check if the Quit button is clicked and time is up
+            elapsed_time = time.time() - self.start_time
+            remaining_time = max(0, self.duration - elapsed_time)
+            if quitRect.collidepoint(mousePos) and remaining_time <= 0:
+                pygame.mixer.music.stop()
+                return "quit"
 
     def draw(self):
+        #Test code for list appending(DELETE ME WHEN COMPLETE W/ SENDING SERVER LIST): self.readList.append('A 12LetterChar hit a 12LetterChar')
+
+        #gets the messages from the server and fixes scores 
+        messageList = self.server.returnMessages()
+        if messageList != None:
+            self.fixMessagesScore(messageList)
+
         self.screen.fill((0, 0, 0))  # Fill screen with black
+        mouse = pygame.mouse.get_pos()
 
         # Calculate elapsed time
         elapsed_time = time.time() - self.start_time
         remaining_time = max(0, self.duration - elapsed_time)
-
-        # Stop the game if time is up
-        if remaining_time <= 0:
-            return "Done"
 
         screen_width, screen_height = self.screen.get_size()
 
@@ -105,6 +158,36 @@ class scoreBoard:
         # Draw Timer at the bottom 1/6 of the middle section
         timer_rect = pygame.Rect(section_width, screen_height * 5 // 6, section_width, screen_height // 6)
         self.draw_timer(timer_rect, remaining_time)
+
+        # If time is up, draw the Quit button over the timer
+        if remaining_time <= 0:
+            # Adjust button dimensions to fit the text
+            pygame.mixer.music.stop()
+            self.client.sendClientMessage(str(221))
+            self.client.sendClientMessage(str(221))
+            self.client.sendClientMessage(str(221))
+            button_width = section_width * 0.5  # Wider button to fit longer text
+            button_height = screen_height // 15  # Reduced height for the button
+            quit_rect = pygame.Rect(
+                section_width * 1.25,  # Center the button horizontally
+                screen_height * 7 // 8,  # Vertical position
+                button_width,  # Button width
+                button_height  # Button height
+            )
+
+            # Change button color on hover
+            if quit_rect.collidepoint(mouse):
+                pygame.draw.rect(self.screen, 'cornsilk3', quit_rect)  # Lighter color when hovered
+            else:
+                pygame.draw.rect(self.screen, 'cornsilk4', quit_rect)  # Red color
+
+            # Render the text
+            quit_text = self.font.render("Back to Setup", True, (255, 255, 255))  # White text
+            quit_text_rect = quit_text.get_rect(center=(quit_rect.centerx, quit_rect.centery))
+
+
+            # Draw the text inside the button
+            self.screen.blit(quit_text, quit_text_rect)
 
         pygame.display.flip()  # Update display
 
