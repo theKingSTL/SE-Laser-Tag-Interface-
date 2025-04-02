@@ -22,11 +22,12 @@ from .actionGUI import *
 
 
 class Player:
-    def __init__(self, name):
+    def __init__(self, name, team):
         self.name = name
         self.score = 0  # Initialize score to zero
         self.equipId = -1
         self.hitBase = False 
+        self.team = team #"red" or "green"
 
 class scoreBoard:
     def __init__(self, screen, ids, names, nameConnectID, idConnectEquip, client, server):
@@ -60,8 +61,8 @@ class scoreBoard:
         self.greenNamesFilt = list(filter(lambda item: item != "", self.names[1]))
 
         # Initialize players as objects from self.names
-        self.redPlayers = [Player(name) for name in self.redNamesFilt]  # Red Team
-        self.greenPlayers = [Player(name) for name in self.greenNamesFilt]  # Green Team
+        self.redPlayers = [Player(name, "red") for name in self.redNamesFilt]  # Red Team
+        self.greenPlayers = [Player(name, "green") for name in self.greenNamesFilt]  # Green Team
         #will asign all the equip IDS to the players 
         self.assignIDS()
 
@@ -233,8 +234,46 @@ class scoreBoard:
             self.greenPlayers[playerIndex].score += points
             self.scores["Green Team"] += points
     
-    def fixMessagesScore(self):
-        print(1)
+    def fixMessagesScore(self):   
+        for message in self.readList:  # Assuming `self.readList` contains messages like "11:12"
+            try:
+                # Split the message into two integers
+                player1_id, player2_id = map(int, message.split(":"))
+
+                # Find Player 1 (Shooter)
+                player1 = next((p for p in self.redPlayers + self.greenPlayers if p.equipId == player1_id), None)
+
+                # Find Player 2 (Target)
+                player2 = next((p for p in self.redPlayers + self.greenPlayers if p.equipId == player2_id), None)
+
+                # If either player is missing, continue
+                if not player1 or not player2:
+                    print(f"Warning: Could not find players for IDs {player1_id}, {player2_id}")
+                    continue
+
+                # Determine teams
+                player1_team = "Red" if player1 in self.redPlayers else "Green"
+                player2_team = "Red" if player2 in self.redPlayers else "Green"
+
+                # Identify if this is a base hit (53 or 43)
+                if player2_id in (53, 43):  
+                    if not player1.hitBase:  # Check if player has hit the base before
+                        player1.name += " [B]"  # Mark as base hit
+                        player1.hitBase = True
+
+                # Adjust scores based on team
+                if player1_team == player2_team:
+                    # Same team hit (Friendly Fire) -> -10 points for Player 1
+                    self.scores[player1_team] -= 10
+                    print(f"{player1.name} hit {player2.name} (Same Team) -10 Points")
+                else:
+                    # Opponent hit -> +10 points for Player 1
+                    self.scores[player1_team] += 10
+                    print(f"{player1.name} hit {player2.name} (Enemy Team) +10 Points")
+
+            except ValueError:
+                print(f"Invalid message format: {message}")
+
         #loop the array split into two values seperated by :
         #Find player with equipment ID first 
         # is the second string a 53 or 43 if so check which team player one is on add a [B] to Name and check if been base before 
@@ -246,12 +285,15 @@ class scoreBoard:
         
     
     def assignIDS(self):
-        print(2)
-        # for each player id = namesConnect[player name]
-        # equipID = data[id]
-        # then set thats players equip id to this value do for each 
+        for player in self.redPlayers:
+            player_id = self.nameConnect[player.name]  # Get the player's ID
+            player.equipId = self.idConnectEquip[player_id]  # Assign the equipment ID
+
+        # Assign IDs for Green Team
+        for player in self.greenPlayers:
+            player_id = self.nameConnect[player.name]
+            player.equipId = self.idConnectEquip[player_id]
 
 
 # TO DO 
 # make winning team flash 
-# Add music 
