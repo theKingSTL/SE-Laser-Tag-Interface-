@@ -53,7 +53,7 @@ class scoreBoard:
         self.quit = self.font.render("Quit", True, (0, 0, 0))  # Render quit text
         self.start_time = time.time()  # Start time
         self.duration = 6 * 60  # 6 minutes
-        self.scores = {"Red Team": 0, "Green Team": 0}  # Team scores
+        self.scores = {"Red Team": 3, "Green Team": 0}  # Team scores
         self.font = pygame.font.Font(None, 36)  # Font for text
         self.fontText = pygame.font.SysFont(None, 32)
         self.neon_colors = {
@@ -64,6 +64,7 @@ class scoreBoard:
             "white": (255, 255, 255)
         }
         self.padding = 20  # Space between elements
+        self.frame = 0 # Counts how many frames have been drawn
 
         #Filter out the empty names
         self.redNamesFilt = list(filter(lambda item: item != "", self.names[0]))
@@ -194,8 +195,21 @@ class scoreBoard:
     def drawTeamSection(self, x_offset, team_name, color, players):
         team_font = pygame.font.Font(None, 64)  # Bigger font for team name
 
+        self.frame += 1
+        # Determine if this team is winning
+        other_team = "Green Team" if team_name == "Red Team" else "Red Team"
+        is_winning = self.scores[team_name] > self.scores[other_team]
+        # Toggle visibility every other frame if winning
+        show_text = True
+        if is_winning and self.frame % 30 <= 10:
+            show_text = False
+        if show_text:
+            team_text = team_font.render(team_name, True, color)
+        else:
+            team_text = team_font.render("", True, color)
+
         # Center the team name text
-        team_text = team_font.render(team_name, True, color)
+        #team_text = team_font.render(team_name, True, color)
         text_rect = team_text.get_rect(center=(x_offset + (self.screen.get_width() // 3) // 2, 60))  # Move team name down
 
         # Draw the team name

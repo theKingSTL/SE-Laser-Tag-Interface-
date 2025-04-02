@@ -821,4 +821,3 @@ class TeamBoxUI:
             clock.tick(25)
         self.screen.blit(saved_screen, (0, 0))
         pygame.display.update()
-        
