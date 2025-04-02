@@ -29,6 +29,15 @@ class Player:
         self.hitBase = False 
         self.team = team #"red" or "green"
 
+class Message:
+    def __init__(self,type,team1,team2, name1, name2):
+        self.type = type # True or false for base hit or hit 
+        self.team1 = team1
+        self.team2 = team2
+        self.name1 = name1
+        self.name2 = name2
+
+
 class scoreBoard:
     def __init__(self, screen, ids, names, nameConnectID, idConnectEquip, client, server):
         self.screen = screen
@@ -141,8 +150,8 @@ class scoreBoard:
         for i in range(len(self.readList)):
             y_location = screen_height * 5 // 6-i*32-25
             if((y_location) == 0):
-                print("Off screen")
                 break
+            
             img = self.fontText.render(self.readList[i], True, 'WHITE')
             self.screen.blit(img, (section_width+30, y_location))
 
@@ -227,10 +236,10 @@ class scoreBoard:
         self.screen.blit(timer_text, text_rect)
 
     def updateScore(self, team, playerIndex, points):
-        if team == "Red Team":
+        if team == "red":
             self.redPlayers[playerIndex].score += points
             self.scores["Red Team"] += points
-        elif team == "Green Team":
+        elif team == "green":
             self.greenPlayers[playerIndex].score += points
             self.scores["Green Team"] += points
     
@@ -251,25 +260,37 @@ class scoreBoard:
                     print(f"Warning: Could not find players for IDs {player1_id}, {player2_id}")
                     continue
 
-                # Determine teams
-                player1_team = "Red" if player1 in self.redPlayers else "Green"
-                player2_team = "Red" if player2 in self.redPlayers else "Green"
-
+                # Determine teams and names
+                player1_name, player1_team = player1.name, player1.team
+                player2_name, player2_team = player2.name, player2.team
                 # Identify if this is a base hit (53 or 43)
                 if player2_id in (53, 43):  
                     if not player1.hitBase:  # Check if player has hit the base before
-                        player1.name += " [B]"  # Mark as base hit
-                        player1.hitBase = True
-
-                # Adjust scores based on team
+                        if player1_team == "green" and player2_id == 53:
+                            message = Message(True,player1_team,player2_team, player1_name, player2_name)
+                            self.readList.append(message)
+                            player1.name = "[B] " + player1.name  # Mark as base hit
+                            player1.hitBase = True
+                            self.updateScore(player1_team, player1_id, 100)
+                        elif player1_team == "red" and player2_id == 43:
+                            message = Message(True,player1_team,player2_team, player1_name, player2_name)
+                            self.readList.append(message)
+                            player1.name = "[B] " + player1.name  # Mark as base hit
+                            player1.hitBase = True
+                            self.updateScore(player1_team, player1_id, 100)
+                        else:
+                            print("error in base hits ")
+                
                 if player1_team == player2_team:
-                    # Same team hit (Friendly Fire) -> -10 points for Player 1
-                    self.scores[player1_team] -= 10
-                    print(f"{player1.name} hit {player2.name} (Same Team) -10 Points")
-                else:
-                    # Opponent hit -> +10 points for Player 1
-                    self.scores[player1_team] += 10
-                    print(f"{player1.name} hit {player2.name} (Enemy Team) +10 Points")
+                    self.client.sendClientMessage(str(player1_id))
+                    self.updateScore(player1_team, player1_id, -10)
+                    message = Message(False,player1_team,player2_team, player1_name, player2_name)
+                    self.readList.append(message)
+                elif player1_team != player2_team:
+                    message = Message(False,player1_team,player2_team, player1_name, player2_name)
+                    self.readList.append(message)
+                    self.client.sendClientMessage(str(player2_id))   
+                    self.updateScore(player1_team, player1_id, 10)
 
             except ValueError:
                 print(f"Invalid message format: {message}")
