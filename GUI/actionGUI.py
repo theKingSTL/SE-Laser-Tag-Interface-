@@ -30,12 +30,13 @@ class Player:
         self.team = team #"red" or "green"
 
 class Message:
-    def __init__(self,type,team1,team2, name1, name2):
+    def __init__(self,type,message,team1,team2, name1, name2):
         self.type = type # True or false for base hit or hit 
         self.team1 = team1
         self.team2 = team2
         self.name1 = name1
         self.name2 = name2
+        self.message = message
 
 
 class scoreBoard:
@@ -86,6 +87,19 @@ class scoreBoard:
         # Load and play the track
         pygame.mixer.music.load(track_path)
         pygame.mixer.music.play()
+
+        # message = Message(True," hit green team's base","red","red", "ball", "Guy")
+        # self.readList.append(message)
+        # message = Message(True," hit green team's base","green","red", "ball", "Guy")
+        # self.readList.append(message)
+        # message = Message(False," hit green team's base","red","green", "ball", "Guy")
+        # self.readList.append(message)
+        # message = Message(False," hit green team's base","green","red", "ball", "Guy")
+        # self.readList.append(message)
+        # message = Message(False," hit green team's base","red","green", "ball", "Guy")
+        # self.readList.append(message)
+        # message = Message(False," hit green team's base","green","red", "ball", "Guy")
+        # self.readList.append(message)
 
 
 
@@ -147,14 +161,36 @@ class scoreBoard:
         middle_surface.fill((0, 0, 0))  # Black
         self.screen.blit(middle_surface, (section_width, 0))
 
-        # Draw text
         for i in range(len(self.readList)):
-            y_location = screen_height * 5 // 6-i*32-25
-            if((y_location) == 0):
+            y_location = screen_height * 5 // 6 - i * 32 - 25
+            if y_location == 0:
                 break
-            
-            img = self.fontText.render(self.readList[i], True, 'WHITE')
-            self.screen.blit(img, (section_width+30, y_location))
+
+            msg_obj = self.readList[i]  # Extract the message object
+            name1_color = self.neon_colors[msg_obj.team1]  # Get team1 color
+            name2_color = self.neon_colors[msg_obj.team2]  # Get team2 color
+
+            # Render name1 in its team color
+            name1_img = self.fontText.render(msg_obj.name1, True, name1_color)
+
+            # Render message text in white
+            message_img = self.fontText.render(msg_obj.message, True, self.neon_colors["white"])
+
+            # If type is False, also render name2
+            if not msg_obj.type:
+                name2_img = self.fontText.render(msg_obj.name2, True, name2_color)
+
+            # Calculate positions
+            x_offset = section_width + 30  # Start position
+            self.screen.blit(name1_img, (x_offset, y_location))
+            x_offset += name1_img.get_width() + 5  # Move right
+
+            self.screen.blit(message_img, (x_offset, y_location))
+            x_offset += message_img.get_width() + 5  # Move right
+
+            if not msg_obj.type:
+                self.screen.blit(name2_img, (x_offset, y_location))
+
 
         # Draw Timer at the bottom 1/6 of the middle section
         timer_rect = pygame.Rect(section_width, screen_height * 5 // 6, section_width, screen_height // 6)
@@ -276,33 +312,38 @@ class scoreBoard:
 
                 # Determine teams and names
                 player1_name, player1_team = player1.name, player1.team
-                player2_name, player2_team = player2.name, player2.team
+                if player2 != None:
+                    player2_name, player2_team = player2.name, player2.team
                 # Identify if this is a base hit (53 or 43)
                 if player2_id in (53, 43):  
                     if not player1.hitBase:  # Check if player has hit the base before
                         if player1_team == "green" and player2_id == 53:
-                            message = Message(True,player1_team,player2_team, player1_name, player2_name)
-                            self.readList.append(message)
+                            message = Message(True," hit red team's base",player1_team,player1_team, player1_name, player1_name)
+                            self.readList.insert(0,message)
                             player1.name = "[B] " + player1.name  # Mark as base hit
                             player1.hitBase = True
                             self.updateScore(player1_team, player1_id, 100)
                         elif player1_team == "red" and player2_id == 43:
-                            message = Message(True,player1_team,player2_team, player1_name, player2_name)
-                            self.readList.append(message)
+                            message = Message(True," hit green team's base",player1_team,player1_team, player1_name, player1_name)
+                            self.readList.insert(0,message)
                             player1.name = "[B] " + player1.name  # Mark as base hit
                             player1.hitBase = True
                             self.updateScore(player1_team, player1_id, 100)
                         else:
                             print("error in base hits ")
-                
+
+                if player1.hitBase:
+                    player1_name = player1_name.removeprefix("[B] ")
+                if player2.hitBase:
+                    player2_name = player2_name.removeprefix("[B] ")
                 if player1_team == player2_team:
                     self.client.sendClientMessage(str(player1_id))
                     self.updateScore(player1_team, player1_id, -10)
-                    message = Message(False,player1_team,player2_team, player1_name, player2_name)
-                    self.readList.append(message)
+                    message = Message(False, " hit ",player1_team,player2_team, player1_name, player2_name)
+                    self.readList.insert(0,message)
                 elif player1_team != player2_team:
-                    message = Message(False,player1_team,player2_team, player1_name, player2_name)
-                    self.readList.append(message)
+                    message = Message(False," hit ",player1_team,player2_team, player1_name, player2_name)
+                    self.readList.insert(0,message)
                     self.client.sendClientMessage(str(player2_id))   
                     self.updateScore(player1_team, player1_id, 10)
 
