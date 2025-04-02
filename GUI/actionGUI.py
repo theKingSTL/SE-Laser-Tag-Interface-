@@ -3,8 +3,13 @@ import time
 import pygame
 import sys
 import os
+import random
+
+random.seed(time.time())
 
 server_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Server"))
+# Add the music directory to sys.path
+music_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "photon_tracks"))
 
 # Add the Server directory to sys.path
 sys.path.append(server_dir)
@@ -60,6 +65,19 @@ class scoreBoard:
         #will asign all the equip IDS to the players 
         self.assignIDS()
 
+        #we will start the music 
+        pygame.mixer.init()
+        # Get a list of all MP3 files in the directory
+        tracks = [f for f in os.listdir(music_dir) if f.endswith(".mp3")]
+        track = random.choice(tracks)
+        track_path = os.path.join(music_dir, track)
+
+        # Load and play the track
+        pygame.mixer.music.load(track_path)
+        pygame.mixer.music.play()
+
+
+
     def handleEvent(self, event):
         screenW, screenH = self.screen.get_size()
 
@@ -67,6 +85,7 @@ class scoreBoard:
         sectionW = screenW // 3
 
         if event.type == pygame.QUIT:
+            pygame.mixer.music.stop()
             return "quit"
 
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -77,6 +96,7 @@ class scoreBoard:
             elapsed_time = time.time() - self.start_time
             remaining_time = max(0, self.duration - elapsed_time)
             if quitRect.collidepoint(mousePos) and remaining_time <= 0:
+                pygame.mixer.music.stop()
                 return "quit"
 
     def draw(self):
@@ -132,6 +152,7 @@ class scoreBoard:
         # If time is up, draw the Quit button over the timer
         if remaining_time <= 0:
             # Adjust button dimensions to fit the text
+            pygame.mixer.music.stop()
             self.client.sendClientMessage(str(221))
             self.client.sendClientMessage(str(221))
             self.client.sendClientMessage(str(221))

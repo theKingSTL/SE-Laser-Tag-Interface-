@@ -7,9 +7,6 @@ import ipaddress
 
 server_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Server"))
 
-# Add the Server directory to sys.path
-sys.path.append(server_dir)
-
 # Now you can import the module from the Server director
 from .updClient import *
 from .updServer import *
@@ -55,7 +52,7 @@ def getAspect(image, screen):
 class TeamBoxUI:
     def __init__(self, screen, database):
         #chnage for testing its the time to start time the wait time 
-        self.timeToSwitch = 30
+        self.timeToSwitch = 1
         #take parameters and make screen and database 
         self.screen = screen
         self.width, self.height = screen.get_size()
