@@ -7,6 +7,9 @@ import ipaddress
 
 server_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Server"))
 
+# Add the Server directory to sys.path
+sys.path.append(server_dir)
+
 # Now you can import the module from the Server director
 from .updClient import *
 from .updServer import *
@@ -52,7 +55,7 @@ def getAspect(image, screen):
 class TeamBoxUI:
     def __init__(self, screen, database):
         #chnage for testing its the time to start time the wait time 
-        self.timeToSwitch = 1
+        self.timeToSwitch = 30
         #take parameters and make screen and database 
         self.screen = screen
         self.width, self.height = screen.get_size()
@@ -72,6 +75,7 @@ class TeamBoxUI:
         self.fontTitle = pygame.font.SysFont("Corbel", 80)
         self.fontButton = pygame.font.SysFont("Corbel", 35)
         self.instrcutionText = pygame.font.SysFont("arial", 30)
+        self.fontText = pygame.font.SysFont("Courier", 25)
         self.errorText = pygame.font.SysFont("Courier", 25, True)
         self.fontID = pygame.font.SysFont("Courier", 30, True)  
         self.fontUsername = pygame.font.SysFont("Courier", 25, True) 
@@ -112,13 +116,13 @@ class TeamBoxUI:
         #same idea as above for the ids and names enter empty strings 
         self.ids = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
         self.names = [["" for _ in range(self.numBoxesPerTeam)] for _ in range(self.numTeams)]
-        #will create the list for ids being key and vlaue being equipment ID
+        #will create the list for equipment id and id relation
         self.data: dict[int, int] = {}
-        #connect name to id, name is the key id is the value 
+        #connect id to name 
         self.nameConnect: dict[str,int] = {}
 
         #client UDP socket  
-        self.client = ClientSocket()
+        self.Client = ClientSocket()
         self.server = ServerSocket()
         #start that thing 
         self.server.startServer()
@@ -156,11 +160,7 @@ class TeamBoxUI:
         except psycopg2.Error as e:
             print(f"Database error: {e}")
             return "Error"
-    
-    #will check if player id already exists 
-    def check_duplicate(self, player_id):
-        return player_id in self.nameConnect.values()
-
+        
             #if id doesnt exist need to pop up box and state enter new id 
     def handleEvent(self, event):
         if event.type == pygame.QUIT:
@@ -196,7 +196,7 @@ class TeamBoxUI:
             if changeRect.collidepoint(mousePos):
                 new_ip = self.createNewIP()  # Call without player_id
                 self.server.change_network(new_ip)
-                self.client.changeNetwork(new_ip)
+                self.Client.changeNetwork(new_ip)
                 print(f"New server IP: {new_ip}")  # Debugging output
                 return
 
@@ -225,16 +225,14 @@ class TeamBoxUI:
                 if not (0 < len(player_id) <= 6) or not player_id.isdigit():
                     # Display error message for invalid ID format
                     self.showErrorMessage("ID must be between 1 to 6 digits.", "top")
-                elif self.check_duplicate(player_id) == True:
-                    self.showErrorMessage("ID already in use.", "top")
                 else:
                     userName = self.fetchPlayerName(player_id)
                     if userName is None:
                         userName, equipID = self.createNewUsername(player_id)
                     else:
                         equipID = self.createEquipmentID()
-                    self.client.sendClientMessage(str(equipID))
                     self.names[teamIndex][boxIndex] = userName
+                    self.Client.sendClientMessage(str(equipID))
                     self.data[self.ids[teamIndex][boxIndex]] = equipID
                     self.nameConnect[userName] = self.ids[teamIndex][boxIndex]
                     self.ids[teamIndex][boxIndex] = ""  # Clear the ID box
@@ -547,7 +545,7 @@ class TeamBoxUI:
 
             # Display error message if input exceeds 18 characters and within the 3-second window
             if showError and (currentTime - errorStartTime <= 3):
-                errorSurface = self.errorText.render("Error: IP must be 18 characters or less.", True, (255, 0, 0))
+                errorSurface = self.fontText.render("Error: IP must be 18 characters or less.", True, (255, 0, 0))
                 errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
                 self.screen.blit(errorSurface, errorRect)
             else:
@@ -555,7 +553,7 @@ class TeamBoxUI:
 
             # Display error message if input is too short and within the 3-second window
             if showError2 and (currentTime - errorStartTime <= 3):
-                errorSurface = self.errorText.render("Error: IP must be at least 1 character.", True, (255, 0, 0))
+                errorSurface = self.fontText.render("Error: IP must be at least 1 character.", True, (255, 0, 0))
                 errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
                 self.screen.blit(errorSurface, errorRect)
             else:
@@ -563,7 +561,7 @@ class TeamBoxUI:
 
             # Display error message if IP is invalid and within the 3-second window
             if showInvalidIPError and (currentTime - errorStartTime <= 3):
-                errorSurface = self.errorText.render("Error: Invalid IP address. Please enter a valid IP.", True, (255, 0, 0))
+                errorSurface = self.fontText.render("Error: Invalid IP address. Please enter a valid IP.", True, (255, 0, 0))
                 errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
                 self.screen.blit(errorSurface, errorRect)
             else:
@@ -589,7 +587,6 @@ class TeamBoxUI:
 
         # Error message variables
         showError = False
-        sameEquipError = False
         errorStartTime = 0  # Tracks when the error message was first displayed
 
         while inputActive:
@@ -601,15 +598,7 @@ class TeamBoxUI:
                     if event.key == pygame.K_RETURN:
                         # Validate input when Enter is pressed
                         if len(inputText) == 2 and inputText.isdigit():  # Check for exactly 7 digits
-                            for equipID in self.data.values():
-                                if equipID == inputText:
-                                    sameEquipError = True
-                                    showError = True
-                                    errorStartTime = currentTime  # Start the error message timer
-                                    inputText = ""  # Clear input for retry
-                                    break
-                            if not sameEquipError:  # Only exit the input loop if no duplicate was found
-                                inputActive = False
+                            inputActive = False  # Exit input loop if valid
                         else:
                             # Show error message and reset input
                             showError = True
@@ -656,17 +645,11 @@ class TeamBoxUI:
 
             # Display error message if input is invalid and within the 3-second window
             if showError and (currentTime - errorStartTime <= 3):
-                if sameEquipError == True:
-                    errorSurface = self.errorText.render("Error: Equipment ID already Exists.", True, (255, 0, 0))
-                    errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
-                    self.screen.blit(errorSurface, errorRect)
-                else:
-                    errorSurface = self.errorText.render("Error: Please enter exactly 2 digits.", True, (255, 0, 0))
-                    errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
-                    self.screen.blit(errorSurface, errorRect)
+                errorSurface = self.fontText.render("Error: Please enter exactly 2 digits.", True, (255, 0, 0))
+                errorRect = errorSurface.get_rect(center=(self.width // 2, self.height // 2 + 50))
+                self.screen.blit(errorSurface, errorRect)
             else:
                 showError = False  # Hide error message after 3 seconds
-                sameEquipError = False
 
             pygame.display.update()  # Refresh the screen
 
@@ -807,17 +790,20 @@ class TeamBoxUI:
         pygame.display.update()
 
     def startGame(self):
-        self.client.sendClientMessage(str(202))
+        self.Client.sendClientMessage(str(202))
         saved_screen = self.screen.copy()
         clock = pygame.time.Clock()
-        score = scoreBoard(self.screen, self.ids, self.names, self.nameConnect, self.data, self.client, self.server)
+        score = scoreBoard(self.screen, self.ids, self.names, self.nameConnect, self.data, self.Client, self.server)
         running = True
         while running:
             for event in pygame.event.get():
                 action = score.handleEvent(event)
                 if action == "quit":
                     running = False
-            score.draw()
+
+            doneFlag = score.draw()
+            if doneFlag == "Done":
+                running = False 
             clock.tick(25)
         self.screen.blit(saved_screen, (0, 0))
         pygame.display.update()
