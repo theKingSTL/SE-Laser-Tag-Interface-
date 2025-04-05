@@ -54,6 +54,7 @@ class ServerSocket:
         if self.UDPServerSocket:
             try:
                 self.UDPServerSocket.shutdown(socket.SHUT_RDWR)
+                self.messageQueue.clear()  # Clear the list
             except OSError:
                 pass  # Socket might already be closed
             self.UDPServerSocket.close()
