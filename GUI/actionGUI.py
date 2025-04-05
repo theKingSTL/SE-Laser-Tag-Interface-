@@ -7,7 +7,7 @@ import random
 
 random.seed(time.time())
 
-server_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Server"))
+server_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Serve"))
 # Add the music directory to sys.path
 music_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "photon_tracks"))
 
@@ -42,6 +42,10 @@ class Message:
 class scoreBoard:
     def __init__(self, screen, ids, names, nameConnectID, idConnectEquip, client, server):
         self.screen = screen
+        print(ids)
+        print(names)
+        print(nameConnectID)
+        print(idConnectEquip)
         self.ids = ids
         self.names = names  # List of player names for Red Team and Green Team
         self.nameConnect = nameConnectID
@@ -54,7 +58,7 @@ class scoreBoard:
         self.quit = self.font.render("Quit", True, (0, 0, 0))  # Render quit text
         self.start_time = time.time()  # Start time
         self.duration = 6 * 60  # 6 minutes
-        self.scores = {"Red Team": 3, "Green Team": 0}  # Team scores
+        self.scores = {"Red Team": 0, "Green Team": 0}  # Team scores
         self.font = pygame.font.Font(None, 36)  # Font for text
         self.fontText = pygame.font.SysFont(None, 32)
         self.neon_colors = {
@@ -122,6 +126,9 @@ class scoreBoard:
             remaining_time = max(0, self.duration - elapsed_time)
             if quitRect.collidepoint(mousePos) and remaining_time <= 0:
                 pygame.mixer.music.stop()
+                self.client.sendClientMessage(str(221))
+                self.client.sendClientMessage(str(221))
+                self.client.sendClientMessage(str(221))
                 return "quit"
 
     def draw(self):
@@ -199,10 +206,6 @@ class scoreBoard:
         # If time is up, draw the Quit button over the timer
         if remaining_time <= 0:
             # Adjust button dimensions to fit the text
-            pygame.mixer.music.stop()
-            self.client.sendClientMessage(str(221))
-            self.client.sendClientMessage(str(221))
-            self.client.sendClientMessage(str(221))
             button_width = section_width * 0.5  # Wider button to fit longer text
             button_height = screen_height // 15  # Reduced height for the button
             quit_rect = pygame.Rect(
@@ -293,17 +296,19 @@ class scoreBoard:
             self.greenPlayers[playerIndex].score += points
             self.scores["Green Team"] += points
     
-    def fixMessagesScore(self):   
-        for message in self.readList:  # Assuming `self.readList` contains messages like "11:12"
+    def fixMessagesScore(self, messageList):   
+        for message in messageList:  # Assuming `self.readList` contains messages like "11:12"
             try:
+                # print(message)
                 # Split the message into two integers
                 player1_id, player2_id = map(int, message.split(":"))
-
+                # print(player1_id)
+                self.client.sendClientMessage(str(player1_id))
                 # Find Player 1 (Shooter)
-                player1 = next((p for p in self.redPlayers + self.greenPlayers if p.equipId == player1_id), None)
+                player1 = next((p for p in self.redPlayers + self.greenPlayers if int(p.equipId) == player1_id), None)
 
                 # Find Player 2 (Target)
-                player2 = next((p for p in self.redPlayers + self.greenPlayers if p.equipId == player2_id), None)
+                player2 = next((p for p in self.redPlayers + self.greenPlayers if int(p.equipId) == player2_id), None)
 
                 # If either player is missing, continue
                 if not player1 or not player2:
@@ -311,10 +316,12 @@ class scoreBoard:
                     continue
 
                 # Determine teams and names
+                print("1")
                 player1_name, player1_team = player1.name, player1.team
                 if player2 != None:
                     player2_name, player2_team = player2.name, player2.team
                 # Identify if this is a base hit (53 or 43)
+                print("2")
                 if player2_id in (53, 43):  
                     if not player1.hitBase:  # Check if player has hit the base before
                         if player1_team == "green" and player2_id == 53:
@@ -331,7 +338,7 @@ class scoreBoard:
                             self.updateScore(player1_team, player1_id, 100)
                         else:
                             print("error in base hits ")
-
+                print("3")
                 if player1.hitBase:
                     player1_name = player1_name.removeprefix("[B] ")
                 if player2.hitBase:
@@ -349,15 +356,6 @@ class scoreBoard:
 
             except ValueError:
                 print(f"Invalid message format: {message}")
-
-        #loop the array split into two values seperated by :
-        #Find player with equipment ID first 
-        # is the second string a 53 or 43 if so check which team player one is on add a [B] to Name and check if been base before 
-        #Find playe with second hit 
-        #Are they on same team 
-            #if yes -10 transmit first 
-            #if no +10 tramsit second 
-        #print message to screen 
         
     
     def assignIDS(self):

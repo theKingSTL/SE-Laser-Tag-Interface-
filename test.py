@@ -63,8 +63,6 @@ while True:
 	
 	UDPClientSocketTransmit.sendto(str.encode(str(message)), clientAddressPort)
 	# receive answer from game softare
-	
-	
 	received_data, address = UDPServerSocketReceive.recvfrom(bufferSize)
 	received_data = received_data.decode('utf-8')
 	print ("Received from game software: " + received_data)

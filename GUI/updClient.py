@@ -10,14 +10,11 @@ class ClientSocket:
         self.UDPClientSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 
     def sendClientMessage(self, content):
-        self.msgFromClient       = content
-        self.bytesToSend         = self.msgFromClient.encode()
-
         # Create a UDP socket at client side
         # try to send data to the server
         try:
             # Send to server using created UDP socket
-            self.UDPClientSocket.sendto(self.bytesToSend, (self.serverAddressPort[0],self.serverAddressPort[1]))
+            self.UDPClientSocket.sendto(str.encode(str(content)), (self.serverAddressPort[0],self.serverAddressPort[1]))
             print(f"Sent content: {content} to {self.serverAddressPort[1]}")
         except Exception as ex:
             print("unforch your code did not work bc ", ex)
