@@ -303,12 +303,12 @@ class scoreBoard:
                 # Split the message into two integers
                 player1_id, player2_id = map(int, message.split(":"))
                 # print(player1_id)
-                self.client.sendClientMessage(str(player1_id))
+                # self.client.sendClientMessage(str(player1_id))
                 # Find Player 1 (Shooter)
-                player1 = next((p for p in self.redPlayers + self.greenPlayers if int(p.equipId) == player1_id), None)
+                player1 = next((p for p in self.redPlayers + self.greenPlayers if int(p.equipId) == int(player1_id)), None)
 
                 # Find Player 2 (Target)
-                player2 = next((p for p in self.redPlayers + self.greenPlayers if int(p.equipId) == player2_id), None)
+                player2 = next((p for p in self.redPlayers + self.greenPlayers if int(p.equipId) == int(player2_id)), None)
 
                 # If either player is missing, continue
                 if not player1 or not player2:
@@ -354,7 +354,7 @@ class scoreBoard:
                     self.client.sendClientMessage(str(player2_id))   
                     self.updateScore(player1_team, player1_id, 10)
 
-            except ValueError:
+            except:
                 print(f"Invalid message format: {message}")
         
     
