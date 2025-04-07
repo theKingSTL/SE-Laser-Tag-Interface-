@@ -322,7 +322,7 @@ class TeamBoxUI:
                 break
 
 
-
+    #Show Error Message Handling
     def showErrorMessage(self, message, location):
         if location == "top":
             x=self.width // 2.05
@@ -461,7 +461,7 @@ class TeamBoxUI:
             return inputTextStripped, equipID
         else:
             return "", None  # Default username if no input is provided
-
+    #Creates new IP
     def createNewIP(self):
         saved_screen = self.screen.copy()
         inputBox = pygame.Rect(self.width // 2 - 150, self.height // 2 - 25, 300, 50)

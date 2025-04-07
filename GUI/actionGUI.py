@@ -94,6 +94,7 @@ class scoreBoard:
         # Define section widths (each section takes 1/3 of the screen width)
         sectionW = screenW // 3
 
+        #Turn off music when quit
         if event.type == pygame.QUIT:
             pygame.mixer.music.stop()
             return "quit"
