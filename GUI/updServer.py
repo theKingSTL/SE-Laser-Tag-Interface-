@@ -41,9 +41,6 @@ class ServerSocket:
             except OSError:
                 # If socket is closed while blocking in recvfrom, it often raises OSError
                 break
-            # If you want to stop on a particular message, you could do:
-            # if b"stop" in message:
-            #     break
 
         print("Server thread stopping...")
 
