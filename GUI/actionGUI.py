@@ -9,8 +9,6 @@ random.seed(time.time())
 
 server_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Serve"))
 # Add the music directory to sys.path
-music_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "photon_tracks"))
-
 # Add the Server directory to sys.path
 sys.path.append(server_dir)
 
@@ -86,6 +84,7 @@ class scoreBoard:
 
         #Turn off music when quit
         if event.type == pygame.QUIT:
+            self.client.sendClientMessage(str(221))
             self.music.music.stop()
             return "quit"
 
@@ -97,10 +96,8 @@ class scoreBoard:
             elapsed_time = time.time() - self.start_time
             remaining_time = max(0, self.duration - elapsed_time)
             if quitRect.collidepoint(mousePos) and remaining_time <= 0:
+                self.client.sendClientMessage(str(221))
                 self.music.music.stop()
-                self.client.sendClientMessage(str(221))
-                self.client.sendClientMessage(str(221))
-                self.client.sendClientMessage(str(221))
                 return "quit"
 
     def draw(self):
@@ -186,6 +183,9 @@ class scoreBoard:
                 button_width,  # Button width
                 button_height  # Button height
             )
+            self.client.sendClientMessage(str(221))
+            self.client.sendClientMessage(str(221))
+            self.client.sendClientMessage(str(221))
 
             # Change button color on hover
             if quit_rect.collidepoint(mouse):

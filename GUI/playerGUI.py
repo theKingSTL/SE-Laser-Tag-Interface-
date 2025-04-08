@@ -4,6 +4,9 @@ import os
 import psycopg2
 import time 
 import ipaddress
+import random
+
+random.seed(time.time())
 
 server_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Server"))
 music_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "photon_tracks"))
@@ -53,7 +56,7 @@ def getAspect(image, screen):
 class TeamBoxUI:
     def __init__(self, screen, database):
         #chnage for testing its the time to start time the wait time 
-        self.timeToSwitch = 1
+        self.timeToSwitch = 30
         #take parameters and make screen and database 
         self.screen = screen
         self.width, self.height = screen.get_size()
@@ -192,7 +195,7 @@ class TeamBoxUI:
             # Check if start button was clicked 
             startRect = pygame.Rect(self.width / 2 - 140, self.height - 170, 240, 50)
             if startRect.collidepoint(mousePos):
-                self.startCountDownGameStart()
+                self.startCountDownGameStart(False)
                 return
             # Check if change address button was clicked
             changeRect = pygame.Rect(180, self.height - 100, 250, 50)
@@ -259,17 +262,20 @@ class TeamBoxUI:
                 self.data.clear()
                 self.focusedBox = None  # Remove focus from any box
             elif event.key == pygame.K_F5:
-                self.startCountDownGameStart()
+                self.startCountDownGameStart(False)
             else:
                 # Allow limit to 6 characters
                 if len(self.ids[teamIndex][boxIndex]) < 6:
                     self.ids[teamIndex][boxIndex] += event.unicode
 
-    def startCountDownGameStart(self):
+    def startCountDownGameStart(self,flag):
         # Initialize the timer value
         countdownTime = self.timeToSwitch
         x = self.width // 2.05
         y = self.height - 610  # "top" location
+        tracks = [f for f in os.listdir(music_dir) if f.endswith(".mp3")]
+        track = random.choice(tracks)
+        track_path = os.path.join(music_dir, track)
         
         # Define a fixed box size for uniformity (e.g., width = 300, height = 50)
         box_width = 600
@@ -282,13 +288,11 @@ class TeamBoxUI:
             message = f"Match starts in: {countdownTime}"
                     #we will start the music 
             # Get a list of all MP3 files in the directory
-            tracks = [f for f in os.listdir(music_dir) if f.endswith(".mp3")]
-            track = random.choice(tracks)
-            track_path = os.path.join(music_dir, track)
-
-            # Load and play the track
-            self.music.music.load(track_path)
-            self.music.music.play()
+            if countdownTime == 17 and flag == False:
+                # Load and play the track
+                self.music.music.load(track_path)
+                self.music.music.play()
+                flag = True
 
             countdownSurface = self.errorText.render(message, True, (255, 0, 0))  # Red text
             countdownRect = countdownSurface.get_rect(center=(x, y))
