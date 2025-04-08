@@ -40,7 +40,7 @@ class Message:
 
 
 class scoreBoard:
-    def __init__(self, screen, ids, names, nameConnectID, idConnectEquip, client, server):
+    def __init__(self, screen, ids, names, nameConnectID, idConnectEquip, client, server, music):
         self.screen = screen
         self.ids = ids
         self.names = names  # List of player names for Red Team and Green Team
@@ -48,6 +48,7 @@ class scoreBoard:
         self.idConnectEquip = idConnectEquip
         self.client = client
         self.server = server
+        self.music = music
         self.readList = []
         self.doneFlag = False
         self.font = pygame.font.SysFont("Corbel", 35)
@@ -77,17 +78,6 @@ class scoreBoard:
         #will asign all the equip IDS to the players 
         self.assignIDS()
 
-        #we will start the music 
-        pygame.mixer.init()
-        # Get a list of all MP3 files in the directory
-        tracks = [f for f in os.listdir(music_dir) if f.endswith(".mp3")]
-        track = random.choice(tracks)
-        track_path = os.path.join(music_dir, track)
-
-        # Load and play the track
-        pygame.mixer.music.load(track_path)
-        pygame.mixer.music.play()
-
     def handleEvent(self, event):
         screenW, screenH = self.screen.get_size()
 
@@ -95,7 +85,7 @@ class scoreBoard:
         sectionW = screenW // 3
 
         if event.type == pygame.QUIT:
-            pygame.mixer.music.stop()
+            self.music.music.stop()
             return "quit"
 
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -106,7 +96,7 @@ class scoreBoard:
             elapsed_time = time.time() - self.start_time
             remaining_time = max(0, self.duration - elapsed_time)
             if quitRect.collidepoint(mousePos) and remaining_time <= 0:
-                pygame.mixer.music.stop()
+                self.music.music.stop()
                 self.client.sendClientMessage(str(221))
                 self.client.sendClientMessage(str(221))
                 self.client.sendClientMessage(str(221))
@@ -298,6 +288,7 @@ class scoreBoard:
 
                     if not player1:
                         print(f"Warning: Could not find shooter for ID {player1_id}")
+                        self.client.sendClientMessage(str("-1"))
                         continue
 
                     player1_name, player1_team = player1.name, player1.team
@@ -319,6 +310,9 @@ class scoreBoard:
                             self.updateScore(player1_team, player1_id, 100)
                         else:
                             print("error in base hits")
+                            self.client.sendClientMessage(str("-1"))
+                    else:
+                        self.client.sendClientMessage(str("-1"))
                     continue  # Done handling base hit, skip rest of loop
 
                 # Find both players normally
@@ -327,6 +321,7 @@ class scoreBoard:
 
                 if not player1 or not player2:
                     print(f"Warning: Could not find players for IDs {player1_id}, {player2_id}")
+                    self.client.sendClientMessage(str("-1"))
                     continue
 
                 # Clean up names (remove base prefix if needed)
@@ -348,6 +343,7 @@ class scoreBoard:
 
             except:
                 print(f"Invalid message format: {message}")
+                self.client.sendClientMessage(str("-1"))
     
     def assignIDS(self):
         for player in self.redPlayers:

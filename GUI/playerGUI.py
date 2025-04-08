@@ -6,6 +6,7 @@ import time
 import ipaddress
 
 server_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Server"))
+music_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "photon_tracks"))
 
 # Now you can import the module from the Server director
 from .updClient import *
@@ -76,6 +77,8 @@ class TeamBoxUI:
         self.fontID = pygame.font.SysFont("Courier", 30, True)  
         self.fontUsername = pygame.font.SysFont("Courier", 25, True) 
         self.inputText = pygame.font.SysFont("Courier", 35, True) 
+        pygame.mixer.init()
+        self.music = pygame.mixer
 
         #create the top labels - green and red team 
         self.labels = [
@@ -277,6 +280,16 @@ class TeamBoxUI:
         while running and countdownTime > 0:
             # Render the countdown message
             message = f"Match starts in: {countdownTime}"
+                    #we will start the music 
+            # Get a list of all MP3 files in the directory
+            tracks = [f for f in os.listdir(music_dir) if f.endswith(".mp3")]
+            track = random.choice(tracks)
+            track_path = os.path.join(music_dir, track)
+
+            # Load and play the track
+            self.music.music.load(track_path)
+            self.music.music.play()
+
             countdownSurface = self.errorText.render(message, True, (255, 0, 0))  # Red text
             countdownRect = countdownSurface.get_rect(center=(x, y))
 
@@ -293,6 +306,7 @@ class TeamBoxUI:
                 for event in pygame.event.get():
                     if event.type == pygame.MOUSEBUTTONDOWN or event.type == pygame.KEYDOWN:
                         running = False  # Stop the countdown if clicked or key pressed
+                        self.music.music.stop()
                         # Redraw the affected area to clear the message
                         self.redrawAffectedArea(countdownRect)
                         pygame.display.update()
@@ -810,7 +824,7 @@ class TeamBoxUI:
         self.client.sendClientMessage(str(202))
         saved_screen = self.screen.copy()
         clock = pygame.time.Clock()
-        score = scoreBoard(self.screen, self.ids, self.names, self.nameConnect, self.data, self.client, self.server)
+        score = scoreBoard(self.screen, self.ids, self.names, self.nameConnect, self.data, self.client, self.server, self.music)
         running = True
         while running:
             for event in pygame.event.get():
