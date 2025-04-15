@@ -23,7 +23,7 @@ student@photon:~/SE-Laser-Tag-Interface-$ <br>
 5)In the command prompt, type the following and press Enter to run the program: <br>
 python3 main.py <br>
 6)Mess around with the GUI and player entry screen entering player ids and such, maybe pull up the database to see how players get entered  <br>
-
+7)Can use the test.py as a traffic generator test for the main program and testing the game logic after starting the game with players entered by running it in seperate terminal. <br> 
 
 
 
